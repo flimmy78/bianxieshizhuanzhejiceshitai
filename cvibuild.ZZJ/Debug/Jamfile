@@ -1,0 +1,48 @@
+CCFLAGS = -g ;
+HDRS = 	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\activex\\word"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\activex\\excel"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\custctrl"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\custctrl\\custsupp"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\cvirtsup"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\datasock"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\daqUtil"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\printing"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\toolbox"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\reportgen"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\toolslib\\localui"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\instr"
+	"C:\\Program Files (x86)\\National Instruments\\Shared\\CVI\\toolslib\\custctrl"
+	"C:\\Program Files (x86)\\National Instruments\\Shared\\CVI\\toolslib\\custctrl\\custsupp"
+	"C:\\Program Files (x86)\\National Instruments\\Shared\\CVI\\instr"
+	"C:\\ProgramData\\National Instruments\\CVI2015\\instr"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\include"
+	"C:\\Program Files (x86)\\National Instruments\\Shared\\CVI\\include"
+	"C:\\ProgramData\\National Instruments\\CVI2015\\include"
+	"C:\\ProgramData\\National Instruments\\CVI\\include"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\include\\ansi"
+	"c:\\program files (x86)\\national instruments\\cvi2015\\include\\clang\\3.3"
+	"C:\\Program Files (x86)\\IVI Foundation\\IVI\\Include"
+	"C:\\Program Files (x86)\\IVI Foundation\\VISA\\winnt\\include"
+	"C:\\Program Files (x86)\\National Instruments\\Shared\\MSDTRedistributables\\SDKHeaderFiles\\8.1"
+	"c:\\Program Files (x86)\\National Instruments\\CVI2015\\bin"
+	"c:\\ProgramData\\National Instruments\\CVI2015\\bin"
+	"c:\\Program Files (x86)\\National Instruments\\Shared\\CVI\\Bin"
+	;
+include Jamfile_instr ;
+LOCATE on "log.c" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working" ;
+LOCATE on "ZZJ.c" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working" ;
+Object "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj" : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\log.c" ;
+FILENUM on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj" = 1 ;
+DEFPROTS on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj.cvidefprots" ;
+OUTFILE on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj.out" ;
+PrjObjects += "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\log.obj" ;
+Object "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj" : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\ZZJ.c" ;
+FILENUM on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj" = 2 ;
+DEFPROTS on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj.cvidefprots" ;
+OUTFILE on "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj" = "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj.out" ;
+PrjObjects += "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.obj" ;
+Object "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\resources.res" : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\resources.in.rc" ;
+MainFromObjects "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.exe" : $(PrjObjects) $(InstrObjects) ;
+Depends "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.exe" : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\link_options.txt" ;
+Depends "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.exe" : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\resources.res" ;
+Depends all : "\\\\zpa\\working\\便携式转辙机拉力测试仪\\working\\cvibuild.ZZJ\\Debug\\ZZJ.exe" ;

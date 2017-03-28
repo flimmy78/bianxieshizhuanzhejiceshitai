@@ -1,0 +1,207 @@
+[Workspace Header]
+Version = 1501
+Pathname = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.cws"
+CVI Dir = "/c/program files (x86)/national instruments/cvi2015"
+CVI Shared Dir = "/C/Program Files (x86)/National Instruments/Shared/CVI"
+CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2015"
+CVI Pub Global Dir = "/C/ProgramData/National Instruments/CVI"
+IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
+IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
+VXIplug&play Framework Dir = "/C/Program Files (x86)/IVI Foundation/VISA/winnt"
+VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
+Number of Projects = 1
+Active Project = 1
+Project 0001 = "ZZJ.prj"
+Drag Bar Left = 237
+Window Top = 68
+Window Left = -3
+Window Bottom = 570
+Window Right = 787
+Maximized = True
+Maximized Children = True
+Max32 Number Of Errors = 20
+Track Include File Dependencies = True
+Prompt For Missing Includes = True
+Stop On First Error File = False
+Bring Up Err Win At Start = True
+Bring Up Err Win For Errors = False
+Save Changes Before Running = "Always"
+Save Changes Before Compiling = "Always"
+Hide Windows = False
+Break At First Statement = False
+Sort Type = "File Name"
+Number of Opened Files = 4
+Window Confinement Region Enabled = True
+MainColumnWidth = 220
+FileDateColumnWidth = 70
+FileSizeColumnWidth = 70
+
+[Project Header 0001]
+Version = 1501
+Don't Update DistKit = False
+Platform Code = 4
+Build Configuration = "Debug"
+Warn User If Debugging Release = 1
+Batch Build Release = False
+Batch Build Debug = False
+
+[File 0001]
+Path = "/c/program files (x86)/national instruments/cvi2015/toolslib/toolbox/asynctmr.fp"
+File Type = "Function Panel"
+Disk Date = 3548854800
+In Projects = "1,"
+
+[File 0002]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+File Type = "CSource"
+Disk Date = 3573548651
+In Projects = "1,"
+Window Top = 36
+Window Left = 10
+Window Z-Order = 1
+Source Window State = "1,523,523,523,33,44,44,0,0,115,0,0,0,0,0,22,510,0,524,69,585,1238,1,0,"
+Line Tags = "118,524,1287,1316,1339,"
+
+[File 0003]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
+File Type = "User Interface Resource"
+Disk Date = 3573548338
+In Projects = "1,"
+Window Top = 110
+Window Left = 37
+Window Height = 587
+Window Width = 1024
+Window Z-Order = 2
+
+[File 0004]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
+File Type = "CSource"
+Disk Date = 3573511053
+In Projects = "1,"
+Window Top = 38
+Window Left = 10
+Source Window State = "1,0,0,0,0,0,0,0,0,80,0,0,0,0,0,14,185,0,193,27,371,1024,0,0,"
+
+[File 0005]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.h"
+File Type = "Include"
+Disk Date = 3573548284
+In Projects = ""
+Window Top = 254
+Window Left = 124
+Window Z-Order = 3
+Source Window State = "1,147,147,147,17,31,31,0,3,79,0,0,0,0,0,23,136,0,147,17,587,1012,1,0,"
+
+[File 0006]
+Path = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/toolbox.h"
+File Type = "Include"
+Disk Date = 3548854800
+In Projects = ""
+Window Top = 110
+Window Left = 48
+Window Z-Order = 4
+Source Window State = "1,0,0,0,0,0,0,0,0,80,0,0,0,0,0,14,407,0,414,8,371,1024,1,0,"
+
+[Tab Order]
+Tab 0001 = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Tab 0002 = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
+Tab 0003 = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/toolbox.h"
+Tab 0004 = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.h"
+
+[Default Build Config 0001 Debug]
+Generate Browse Info = True
+Enable Uninitialized Locals Runtime Warning = True
+Batch Build = False
+Profile = "Disabled"
+Debugging Level = "Standard"
+Execution Trace = "Disabled"
+Command Line Args = ""
+Working Directory = ""
+Environment Options = ""
+External Process Path = ""
+
+[Default Build Config 0001 Release]
+Generate Browse Info = True
+Enable Uninitialized Locals Runtime Warning = True
+Batch Build = False
+Profile = "Disabled"
+Debugging Level = "Standard"
+Execution Trace = "Disabled"
+Command Line Args = ""
+Working Directory = ""
+Environment Options = ""
+External Process Path = ""
+
+[Default Build Config 0001 Debug64]
+Generate Browse Info = True
+Enable Uninitialized Locals Runtime Warning = True
+Batch Build = False
+Profile = "Disabled"
+Debugging Level = "Standard"
+Execution Trace = "Disabled"
+Command Line Args = ""
+Working Directory = ""
+Environment Options = ""
+External Process Path = ""
+
+[Default Build Config 0001 Release64]
+Generate Browse Info = True
+Enable Uninitialized Locals Runtime Warning = True
+Batch Build = False
+Profile = "Disabled"
+Debugging Level = "Standard"
+Execution Trace = "Disabled"
+Command Line Args = ""
+Working Directory = ""
+Environment Options = ""
+External Process Path = ""
+
+[Build Dependencies 0001]
+Number of Dependencies = 0
+
+[Build Options 0001]
+Generate Browse Info = True
+Enable Uninitialized Locals Runtime Warning = True
+Execution Trace = "Disabled"
+Profile = "Disabled"
+Debugging Level = "Standard"
+Break On Library Errors = True
+Break On First Chance Exceptions = False
+
+[Execution Target 0001]
+Execution Target Address = "Local desktop computer"
+Execution Target Port = 0
+Execution Target Type = 0
+
+[SCC Options 0001]
+Use global settings = True
+SCC Provider = ""
+SCC Project = ""
+Local Path = ""
+Auxiliary Path = ""
+Perform Same Action For .h File As For .uir File = "Ask"
+Perform Same Action For .cds File As For .prj File = "Ask"
+Username = ""
+Comment = ""
+Use Default Username = False
+Use Default Comment = False
+Suppress CVI Error Messages = False
+Always show confirmation dialog = True
+
+[DLL Debugging Support 0001]
+External Process Path = ""
+
+[Command Line Args 0001]
+Command Line Args = ""
+Working Directory = ""
+Environment Options = ""
+
+[Watch 1]
+Watch Expression = "waveform"
+
+[Watch 2]
+Watch Expression = "chData.addr"
+
+[Watch 3]
+Watch Expression = "g_Waveform"
+

@@ -1,0 +1,156 @@
+[WaveformInit]
+Class="Function"
+Prototype="void WaveformInit();"
+
+[WaveformClr]
+Class="Function"
+Prototype="int WaveformClr(CHANNEL channel);"
+
+[WaveformSet]
+Class="Function"
+Prototype="int WaveformSet(CHANNEL channel, double *data, int len, int x);"
+
+[WaveformGet]
+Class="Function"
+Prototype="int WaveformGet(CHANNEL channel, CHANNEL_TYPE channelType, double **data, int *len, double *x, double *increment);"
+
+[ChartInit]
+Class="Function"
+Prototype="int ChartInit(void *task);"
+
+[RunGUI]
+Class="Function"
+Prototype="void RunGUI(void *task);"
+
+[main]
+Class="Function"
+Prototype="int main(int argc, char **argv);"
+
+[OnExitPrograme]
+Class="Function"
+Prototype="int OnExitPrograme(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnStartMeasure]
+Class="Function"
+Prototype="int OnStartMeasure(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[UpdatePlot]
+Class="Function"
+Prototype="int UpdatePlot();"
+
+[Measure]
+Class="Function"
+Prototype="void Measure(int isStart);"
+
+[UpdateUserData]
+Class="Function"
+Prototype="int UpdateUserData(int panel, int isSave);"
+
+[OnMeasureStart]
+Class="Function"
+Prototype="int OnMeasureStart(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnSystemSet]
+Class="Function"
+Prototype="int OnSystemSet(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnSystem]
+Class="Function"
+Prototype="int OnSystem(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[DisplayData]
+Class="Function"
+Prototype="int DisplayData();"
+
+[MaxDoubleArray]
+Class="Function"
+Prototype="double MaxDoubleArray(double *array, int len);"
+
+[isAutoStart]
+Class="Function"
+Prototype="int isAutoStart();"
+
+[RawData2Waveform]
+Class="Function"
+Prototype="int RawData2Waveform(int isRuning, double rawData[4][50000]);"
+
+[ReadMeasure]
+Class="Function"
+Prototype="int ReadMeasure(double rawData[4][50000]);"
+
+[ReadMeasureAndToWaveform]
+Class="Function"
+Prototype="int ReadMeasureAndToWaveform();"
+
+[PlotData]
+Class="Function"
+Prototype="void PlotData(CHANNEL_TYPE chanType, int panel, int graphCtrl);"
+
+[MeasureDisplayAndAutoStart]
+Class="Function"
+Prototype="int MeasureDisplayAndAutoStart();"
+
+[OnTimer_Measure]
+Class="Function"
+Prototype="int OnTimer_Measure(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[TBDisplayTime]
+Class="Function"
+Prototype="int TBDisplayTime();"
+
+[OnTimer_Watch]
+Class="Function"
+Prototype="int OnTimer_Watch(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[DisplayCursorData]
+Class="Function"
+Prototype="int DisplayCursorData(int panel, int control);"
+
+[OnGraph]
+Class="Function"
+Prototype="int OnGraph(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[EnableCursor]
+Class="Function"
+Prototype="int EnableCursor(int panel, int control);"
+
+[OnCursor]
+Class="Function"
+Prototype="int OnCursor(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[PrintUserData]
+Class="Function"
+Prototype="int PrintUserData(UserData *data, int panel);"
+
+[OnPrint]
+Class="Function"
+Prototype="int OnPrint(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[SaveData]
+Class="Function"
+Prototype="int SaveData();"
+
+[LoadWaveform]
+Class="Function"
+Prototype="int LoadWaveform();"
+
+[OnSaveData]
+Class="Function"
+Prototype="int OnSaveData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnOpenData]
+Class="Function"
+Prototype="int OnOpenData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnSaveUserData]
+Class="Function"
+Prototype="int OnSaveUserData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnCancelSaveUserData]
+Class="Function"
+Prototype="int OnCancelSaveUserData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
+[OnMeasureCancel]
+Class="Function"
+Prototype="int OnMeasureCancel(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);"
+
