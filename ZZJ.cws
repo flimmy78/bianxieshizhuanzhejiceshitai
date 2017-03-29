@@ -1,9 +1,9 @@
 [Workspace Header]
-Version = 1501
-Pathname = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.cws"
-CVI Dir = "/c/program files (x86)/national instruments/cvi2015"
+Version = 1302
+Pathname = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.cws"
+CVI Dir = "/c/program files (x86)/national instruments/cvi2013"
 CVI Shared Dir = "/C/Program Files (x86)/National Instruments/Shared/CVI"
-CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2015"
+CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2013"
 CVI Pub Global Dir = "/C/ProgramData/National Instruments/CVI"
 IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
 IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
@@ -12,11 +12,11 @@ VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
 Number of Projects = 1
 Active Project = 1
 Project 0001 = "ZZJ.prj"
-Drag Bar Left = 237
+Drag Bar Left = 364
 Window Top = 68
-Window Left = -3
+Window Left = 393
 Window Bottom = 570
-Window Right = 787
+Window Right = 1183
 Maximized = True
 Maximized Children = True
 Max32 Number Of Errors = 20
@@ -30,14 +30,14 @@ Save Changes Before Compiling = "Always"
 Hide Windows = False
 Break At First Statement = False
 Sort Type = "File Name"
-Number of Opened Files = 4
+Number of Opened Files = 5
 Window Confinement Region Enabled = True
-MainColumnWidth = 220
+MainColumnWidth = 347
 FileDateColumnWidth = 70
 FileSizeColumnWidth = 70
 
 [Project Header 0001]
-Version = 1501
+Version = 1302
 Don't Update DistKit = False
 Platform Code = 4
 Build Configuration = "Debug"
@@ -46,67 +46,78 @@ Batch Build Release = False
 Batch Build Debug = False
 
 [File 0001]
-Path = "/c/program files (x86)/national instruments/cvi2015/toolslib/toolbox/asynctmr.fp"
+Path = "/c/Program Files (x86)/National Instruments/CVI2013/toolslib/toolbox/asynctmr.fp"
 File Type = "Function Panel"
-Disk Date = 3548854800
+Disk Date = 3486474000
 In Projects = "1,"
 
 [File 0002]
-Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 File Type = "CSource"
-Disk Date = 3573548651
+Disk Date = 3573607038
 In Projects = "1,"
 Window Top = 36
 Window Left = 10
-Window Z-Order = 1
-Source Window State = "1,523,523,523,33,44,44,0,0,115,0,0,0,0,0,22,510,0,524,69,585,1238,1,0,"
-Line Tags = "118,524,1287,1316,1339,"
+Window Z-Order = 3
+Source Window State = "1,203,203,203,0,70,70,0,0,60,0,0,0,0,0,13,187,0,202,63,585,1238,1,0,"
+Line Tags = "119,571,591,1313,1342,"
 
 [File 0003]
-Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
+Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
 File Type = "User Interface Resource"
-Disk Date = 3573548338
+Disk Date = 3573607632
 In Projects = "1,"
 Window Top = 110
 Window Left = 37
 Window Height = 587
 Window Width = 1024
-Window Z-Order = 2
+Window Z-Order = 1
 
 [File 0004]
-Path = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
-File Type = "CSource"
-Disk Date = 3573511053
-In Projects = "1,"
-Window Top = 38
-Window Left = 10
-Source Window State = "1,0,0,0,0,0,0,0,0,80,0,0,0,0,0,14,185,0,193,27,371,1024,0,0,"
-
-[File 0005]
-Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.h"
+Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.h"
 File Type = "Include"
-Disk Date = 3573548284
+Disk Date = 3573607632
 In Projects = ""
 Window Top = 254
 Window Left = 124
-Window Z-Order = 3
-Source Window State = "1,147,147,147,17,31,31,0,3,79,0,0,0,0,0,23,136,0,147,17,587,1012,1,0,"
+Window Z-Order = 2
+Source Window State = "1,147,147,147,17,31,31,0,3,49,0,0,0,0,0,13,136,0,147,17,587,1012,1,0,"
 
-[File 0006]
-Path = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/toolbox.h"
+[File 0005]
+Path = "/c/Program Files (x86)/National Instruments/CVI2013/toolslib/toolbox/toolbox.h"
 File Type = "Include"
-Disk Date = 3548854800
+Disk Date = 3486474000
 In Projects = ""
 Window Top = 110
 Window Left = 48
+Window Z-Order = 5
+Source Window State = "1,0,0,0,0,0,0,0,0,49,0,0,0,0,0,7,407,0,414,8,371,1024,1,0,"
+
+[File 0006]
+Path = "/c/Program Files (x86)/National Instruments/CVI2013/include/userint.h"
+File Type = "Include"
+Disk Date = 3486474000
+In Projects = ""
+Window Top = 182
+Window Left = 86
 Window Z-Order = 4
-Source Window State = "1,0,0,0,0,0,0,0,0,80,0,0,0,0,0,14,407,0,414,8,371,1024,1,0,"
+Source Window State = "1,2130,2130,2130,12,24,24,0,3,49,0,0,0,0,0,13,2119,0,2130,12,587,1024,1,0,"
+
+[File 0007]
+Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/log.c"
+File Type = "CSource"
+Disk Date = 3573556905
+In Projects = "1,"
+Window Top = 38
+Window Left = 10
+Source Window State = "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,185,0,193,27,371,1024,0,0,"
 
 [Tab Order]
-Tab 0001 = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
-Tab 0002 = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
-Tab 0003 = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/toolbox.h"
-Tab 0004 = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.h"
+Tab 0001 = "/c/Program Files (x86)/National Instruments/CVI2013/toolslib/toolbox/toolbox.h"
+Tab 0002 = "/c/Program Files (x86)/National Instruments/CVI2013/include/userint.h"
+Tab 0003 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Tab 0004 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.h"
+Tab 0005 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
 
 [Default Build Config 0001 Debug]
 Generate Browse Info = True

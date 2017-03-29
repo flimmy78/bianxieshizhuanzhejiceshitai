@@ -122,13 +122,14 @@
 #define  USER_DATA_DECORATION             2       /* control type: deco, callback function: (none) */
 #define  USER_DATA_PIC_CANCEL             3       /* control type: picture, callback function: OnCancelSaveUserData */
 #define  USER_DATA_PIC_SAVE               4       /* control type: picture, callback function: OnSaveUserData */
-#define  USER_DATA_TEST_TIME              5       /* control type: string, callback function: (none) */
-#define  USER_DATA_TEST_PERSON            6       /* control type: string, callback function: (none) */
-#define  USER_DATA_TEST_ADDR              7       /* control type: string, callback function: (none) */
-#define  USER_DATA_FORCE_SENSOR_TYPE      8       /* control type: string, callback function: (none) */
-#define  USER_DATA_SWITCH_NUM             9       /* control type: string, callback function: (none) */
-#define  USER_DATA_RADIOBUTTON            10      /* control type: radioButton, callback function: (none) */
-#define  USER_DATA_SWITCH_MODEL           11      /* control type: ring, callback function: (none) */
+#define  USER_DATA_TEST_PERSON            5       /* control type: string, callback function: (none) */
+#define  USER_DATA_TEST_ADDR              6       /* control type: string, callback function: (none) */
+#define  USER_DATA_FILENAME               7       /* control type: string, callback function: (none) */
+#define  USER_DATA_TEST_TIME              8       /* control type: string, callback function: (none) */
+#define  USER_DATA_FORCE_SENSOR_TYPE      9       /* control type: string, callback function: (none) */
+#define  USER_DATA_SWITCH_NUM             10      /* control type: string, callback function: ONSwitchNumChange */
+#define  USER_DATA_RADIOBUTTON            11      /* control type: radioButton, callback function: (none) */
+#define  USER_DATA_SWITCH_MODEL           12      /* control type: ring, callback function: (none) */
 
 
      /* Control Arrays: */
@@ -154,6 +155,7 @@ int  CVICALLBACK OnPrint(int panel, int control, int event, void *callbackData, 
 int  CVICALLBACK OnSaveData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSaveUserData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnStartMeasure(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
+int  CVICALLBACK ONSwitchNumChange(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSystem(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSystemSet(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnTimer_Measure(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);

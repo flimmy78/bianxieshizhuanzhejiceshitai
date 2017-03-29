@@ -26,6 +26,7 @@
 #include "toolbox.h"
 #include "log.h"
 
+
 //==============================================================================
 // Constants
 
@@ -55,7 +56,7 @@ typedef struct
 	// 绘图控件和参数
 	int			chartCtrl;
 	int 		scalingMode[2];
-	double 		min[2],max[2];	
+	double 		min[2],max[2];
 	// 定时器
 	int			timerCtrl;
 	RUN_MODEL   running;
@@ -116,6 +117,8 @@ typedef struct
 	int    	VRefLastLen;
 } Waveform;
 Waveform g_Waveform;
+
+char g_FileName[MAX_PATHNAME_LEN];// 波形文件名
 // 设置波形参数
 typedef struct
 {
@@ -128,7 +131,24 @@ typedef struct
 } ChannelDataPoint;
 
 
-
+/*
+SWITCH_MODEL // 转辙机型号
+FORCE_SENSOR_TYPE // 力传感器类型
+SWITCH_NUM //转辙机编号
+TEST_ADDR  // 测试地点
+TEST_PERSON // 测试人
+TEST_TIME  // 测试日期
+*/
+typedef struct
+{
+	char switchModel[50]; // 转辙机型号
+	char forceSensorType[50]; // 力传感器类型
+	char switchNum[50]; // 转辙机编号
+	char TestAddr[50]; // 测试地点
+	char TestPerson[50]; // 测试人
+	time_t TestTime; // 测试日期
+} UserData;
+UserData g_UserData;
 
 
 
@@ -145,6 +165,9 @@ static int panelUserData = 0; // 保存输入数据界面
 static double initialX;     // 波形图电流、电压初始x的位置。
 static int initialVRef;     // 波形图"电压基准"初始位置
 static int initialForce;    // 波形图力的初始位置
+
+
+
 //==============================================================================
 // Static functions
 #define DAQmxErrChk(functionCall) if( (DAQmxError=(functionCall))<0 ) goto Error; else
@@ -172,6 +195,17 @@ int UpdateUserData(int panel,BOOL isSave);	// panel：需要更新的面板。TRUE:界面到
 int TBDisplayTime( void );                  // 界面显示当前时间
 
 int WaveformClr(CHANNEL channel);
+
+int CreatWaveformName(char *fileName)
+{
+	char strTime[50];
+	time_t testTime = g_UserData.TestTime;
+	strftime(strTime,sizeof(strTime),"%Y年%m月%d日 %H时%M分%S秒",localtime(&testTime));
+	sprintf(fileName,"%s-%s-%s.vif",g_UserData.switchModel,g_UserData.switchNum,strTime);
+	return 0;
+}
+
+
 void WaveformInit(void)
 {
 	WaveformClr(CHANNEL_I);		// 电流通道
@@ -324,7 +358,7 @@ int  ChartInit(TaskHandle task)
 	//errChk(DAQmxGetTaskAttribute (task, DAQmx_Task_NumChans, &numChannels));
 	//SetCtrlAttribute (panelMain, MAIN_STRIPCHART, ATTR_NUM_TRACES, numChannels);
 	GetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS ,&g_info.scalingMode[0],&g_info.min[0],&g_info.max[0]);
-	GetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,&g_info.scalingMode[1],&g_info.min[1],&g_info.max[1]);		
+	GetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,&g_info.scalingMode[1],&g_info.min[1],&g_info.max[1]);
 
 Error:
 	return error;
@@ -346,7 +380,7 @@ void RunGUI(TaskHandle task)
 
 	/* display the panel and run the user interface */
 	TBDisplayTime(); // 更新界面：当前时间
-	
+
 	errChk(EnableCursor(panelGraph, GRAPH_RB_FORCE));	 // 更新界面，让光标与界面保持一致。隐藏力光标
 	errChk(EnableCursor(panelGraph, GRAPH_RB_CURRENT));  // 更新界面，让光标与界面保持一致。隐藏电流光标
 	errChk (DisplayPanel (panelMain));
@@ -418,7 +452,7 @@ int UpdatePlot()
 {
 	// 打开抗锯齿，重新绘制一遍图像。
 	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0);
-	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区	
+	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
 	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE);
 	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS,VAL_AUTOSCALE,0,0);
 	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,VAL_AUTOSCALE,0,0);
@@ -428,7 +462,7 @@ int UpdatePlot()
 	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
 	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1);
 	return 0;
-}		
+}
 // 开始测量
 void Measure(int isStart)
 {
@@ -439,7 +473,7 @@ void Measure(int isStart)
 		//DAQmxErrChk(DAQmxStartTask(g_info.task));
 		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 1);
 		DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW);
-		
+
 		SetCtrlVal(panelMain,MAIN_LED_RUNING,TRUE);
 		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"停止采集");
 		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,FALSE);
@@ -450,13 +484,13 @@ void Measure(int isStart)
 		SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,FALSE);
 
 		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS, g_info.scalingMode[0],g_info.min[0],g_info.max[0]);
-		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,g_info.scalingMode[1],g_info.min[1],g_info.max[1]);				
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,g_info.scalingMode[1],g_info.min[1],g_info.max[1]);
 		//SetCtrlAttribute(panel,control,ATTR_PICT_BGCOLOR,0x185776);
 		g_info.running = RUN_MODEL_RUNING;
 		g_info.startTick = GetTickCount();
 		WaveformInit();
 		UpdateUserData(panelMeasure,TRUE);
-		
+
 	}
 	else  // 停止采集
 	{
@@ -464,9 +498,9 @@ void Measure(int isStart)
 		g_info.workModel = WORK_MODEL_MANUAL;
 		g_info.processedTick = 0;
 		DAQmxErrChk(DAQmxStopTask(g_info.task));
-		
+
 		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 0);
-		SetCtrlVal(panelMain,MAIN_LED_RUNING,FALSE);				
+		SetCtrlVal(panelMain,MAIN_LED_RUNING,FALSE);
 		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"开始采集");
 		// 关闭面板，停止保存
 		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,TRUE);
@@ -474,109 +508,115 @@ void Measure(int isStart)
 		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,TRUE);
 		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,TRUE);
 		SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);		
-		
+		SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
+
 #if 1
 		UpdatePlot();
 #endif
 		// 更新转辙机参数面板
-		UpdateUserData(panelMeasure,FALSE);  
+		UpdateUserData(panelMeasure,FALSE);
 
-		//OnStartMeasure(panelMain,MAIN_PIC_MEASURE,EVENT_LEFT_CLICK,NULL,0,0);		
+		//OnStartMeasure(panelMain,MAIN_PIC_MEASURE,EVENT_LEFT_CLICK,NULL,0,0);
 
 	}
 Error:
 	DAQmxReportErr(DAQmxError);
 	return;
 }
-/*
-SWITCH_MODEL // 转辙机型号
-FORCE_SENSOR_TYPE // 力传感器类型
-SWITCH_NUM //转辙机编号
-TEST_ADDR  // 测试地点
-TEST_PERSON // 测试人
-TEST_TIME  // 测试日期
-*/
-typedef struct{
-	char switchModel[50]; // 转辙机型号
-	char forceSensorType[50]; // 力传感器类型
-	char switchNum[50]; // 转辙机编号
-	char TestAddr[50]; // 测试地点
-	char TestPerson[50]; // 测试人
-	time_t TestTime; // 测试日期
-}UserData;
-UserData g_UserData;
+
 
 int UpdateUserData(int panel,BOOL isSave)
 {
 	char str[50];
 	time_t testTime;
-	
-	if(panel == panelMeasure){
-		if(isSave){
-		// 转辙机型号	
-			GetCtrlVal(panel,MEASURE_SWITCH_MODEL,str); 
+
+	if(panel == panelMeasure)
+	{
+		if(isSave)
+		{
+			// 转辙机型号
+			GetCtrlVal(panel,MEASURE_SWITCH_MODEL,str);
 			strcpy(g_UserData.switchModel,str);
-			// 力传感器类型	
-#if 0			
-			GetCtrlVal(panel,USER_DATA_FORCE_SENSOR_TYPE,str); 
+			// 力传感器类型
+#if 0
+			GetCtrlVal(panel,USER_DATA_FORCE_SENSOR_TYPE,str);
 #else
-			if(strcmp(g_UserData.switchModel,"S700K-C")){
+			if(strcmp(g_UserData.switchModel,"S700K-C"))
+			{
 				strcpy(str,"φ25mm");
-			}else {
+			}
+			else
+			{
 				strcpy(str,"φ22mm");
 			}
 #endif
-			strcpy(g_UserData.forceSensorType,str);			
+			strcpy(g_UserData.forceSensorType,str);
 			// 测试日期
 			time(&testTime);
-			g_UserData.TestTime	= testTime;			
-		}else{
-			// 转辙机型号	
-			strcpy(str,g_UserData.switchModel);	
-			SetCtrlVal(panel,MEASURE_SWITCH_MODEL,str); 
+			g_UserData.TestTime	= testTime;
 		}
-	}else if(panel == panelUserData){
-			if(isSave){
-			// 转辙机型号	
-				GetCtrlVal(panel,USER_DATA_SWITCH_MODEL,str); 
-				strcpy(g_UserData.switchModel,str);
+		else
+		{
+			// 转辙机型号
+			strcpy(str,g_UserData.switchModel);
+			SetCtrlVal(panel,MEASURE_SWITCH_MODEL,str);
+		}
+	}
+	else if(panel == panelUserData)
+	{
+		if(isSave)
+		{
+			// 文件名
+			GetCtrlVal(panel,USER_DATA_FILENAME,str);
+			strcpy(g_FileName,str);
+			
+			// 转辙机型号
+			GetCtrlVal(panel,USER_DATA_SWITCH_MODEL,str);
+			strcpy(g_UserData.switchModel,str);
 
-			// 转辙机编号		
-				GetCtrlVal(panel,USER_DATA_SWITCH_NUM,str); 
-				strcpy(g_UserData.switchNum,str);
-			// 测试地点		
-				GetCtrlVal(panel,USER_DATA_TEST_ADDR,str); 
-				strcpy(g_UserData.TestAddr,str);		
-			// 测试人		
-				GetCtrlVal(panel,USER_DATA_TEST_PERSON,str); 
-				strcpy(g_UserData.TestPerson,str);		
-		
-			}else{  // 读取数据并显示在面板上
-			// 转辙机型号	
-				strcpy(str,g_UserData.switchModel);	
-				SetCtrlVal(panel,USER_DATA_SWITCH_MODEL,str); 
+			// 转辙机编号
+			GetCtrlVal(panel,USER_DATA_SWITCH_NUM,str);
+			strcpy(g_UserData.switchNum,str);
+			// 测试地点
+			GetCtrlVal(panel,USER_DATA_TEST_ADDR,str);
+			strcpy(g_UserData.TestAddr,str);
+			// 测试人
+			GetCtrlVal(panel,USER_DATA_TEST_PERSON,str);
+			strcpy(g_UserData.TestPerson,str);
 
-			// 力传感器类型	
-				strcpy(str,g_UserData.forceSensorType);	
-				SetCtrlVal(panel,USER_DATA_FORCE_SENSOR_TYPE,str); 
-			// 转辙机编号		
-				strcpy(str,g_UserData.switchNum);	
-				SetCtrlVal(panel,USER_DATA_SWITCH_NUM,str); 
-			// 测试地点		
-				strcpy(str,g_UserData.TestAddr);			
-				SetCtrlVal(panel,USER_DATA_TEST_ADDR,str); 
-			// 测试人		
-				strcpy(str,g_UserData.TestPerson);			
-				SetCtrlVal(panel,USER_DATA_TEST_PERSON,str); 
+		}
+		else    // 读取数据并显示在面板上
+		{
+			// 文件名
+			//strcpy(str,g_FileName);
+			CreatWaveformName(str);
+			SetCtrlVal(panel,USER_DATA_FILENAME,str);
+			// 转辙机型号
+			strcpy(str,g_UserData.switchModel);
+			SetCtrlVal(panel,USER_DATA_SWITCH_MODEL,str);
+
+			// 力传感器类型
+			strcpy(str,g_UserData.forceSensorType);
+			SetCtrlVal(panel,USER_DATA_FORCE_SENSOR_TYPE,str);
+			// 转辙机编号
+			strcpy(str,g_UserData.switchNum);
+			SetCtrlVal(panel,USER_DATA_SWITCH_NUM,str);
+			// 测试地点
+			strcpy(str,g_UserData.TestAddr);
+			SetCtrlVal(panel,USER_DATA_TEST_ADDR,str);
+			// 测试人
+			strcpy(str,g_UserData.TestPerson);
+			SetCtrlVal(panel,USER_DATA_TEST_PERSON,str);
 			// 测试日期
-				testTime = g_UserData.TestTime;		
-				strftime(str,sizeof(str),"%Y年%m月%d日 %H:%M:%S",localtime(&testTime));
-				SetCtrlVal (panel, USER_DATA_TEST_TIME, str);		
-			}
-		}else{
-			ERR1("UpdateUserData参数panel错误，panel:%d.",panel);
-		} 
+			testTime = g_UserData.TestTime;
+			strftime(str,sizeof(str),"%Y年%m月%d日 %H:%M:%S",localtime(&testTime));
+			SetCtrlVal (panel, USER_DATA_TEST_TIME, str);
+		}
+	}
+	else
+	{
+		ERR1("UpdateUserData参数panel错误，panel:%d.",panel);
+	}
 	return 0;
 }
 
@@ -596,7 +636,7 @@ int CVICALLBACK OnMeasureStart (int panel, int control, int event,
 			Measure(TRUE);
 		}
 
-		HidePanel(panel);		
+		HidePanel(panel);
 	}
 
 	return 0;
@@ -975,14 +1015,15 @@ int MeasureDisplayAndAutoStart()
 		if(curTick > g_info.startTick + maxTime_ms)
 			curTick = g_info.startTick + maxTime_ms;
 		int n = (curTick - g_info.startTick - g_info.processedTick)/100;
-		g_info.processedTick = ((curTick - g_info.startTick)/100)*100;			
-		for(int i=0;i<n;i++){
+		g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
+		for(int i=0; i<n; i++)
+		{
 			ReadMeasure(g_Waveform.rawData);
 			RawData2Waveform(TRUE,g_Waveform.rawData);
 			DisplayData();
 			//ReadMeasureAndToWaveform();
 			PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);
-		}		
+		}
 		if(g_info.processedTick >= maxTime_ms) // 只测量maxTime 毫秒内的数据
 		{
 			Measure(FALSE); // 停止采集
@@ -1011,12 +1052,14 @@ int CVICALLBACK OnTimer_Measure (int panel, int control, int event,
 			{
 				curTick = GetTickCount();
 				n = (curTick - g_info.startTick - g_info.processedTick)/100;
-				g_info.processedTick = ((curTick - g_info.startTick)/100)*100;			
-				for(int i=0;i<n;i++){
+				g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
+				for(int i=0; i<n; i++)
+				{
 					MeasureDisplayAndAutoStart();
 				}
 			}
-			else{
+			else
+			{
 				MeasureDisplayAndAutoStart();
 			}
 			break;
@@ -1063,7 +1106,7 @@ int TBDisplayTime( void )
 	sprintf (acData, "%02d:%02d:%02d", timeinfo->tm_hour,timeinfo->tm_min,timeinfo->tm_sec );
 #else
 	strftime(acData,sizeof(acData),"%Y-%m-%d %H:%M:%S",timeinfo);
-#endif	
+#endif
 	SetCtrlVal (panelMain, MAIN_TM_TIME, acData);
 	return 0;
 }
@@ -1077,13 +1120,13 @@ int TBDisplayTime( void )
 	timeinfo = localtime(&rawTime);
 
 	strftime(acData,sizeof(acData),"%H:%M:%S",timeinfo);
-	
+
 	SetCtrlVal (panelMain, MAIN_TM_TIME, acData);
 	return 0;
 }
 #endif
 int CVICALLBACK OnTimer_Watch (int panel, int control, int event,
-						 void *callbackData, int eventData1, int eventData2)
+							   void *callbackData, int eventData1, int eventData2)
 {
 	switch (event)
 	{
@@ -1217,42 +1260,42 @@ int CVICALLBACK OnCursor (int panel, int control, int event,
 int PrintUserData(UserData *data,int panel)
 {
 	char str[50];
-	time_t testTime;	
-	
+	time_t testTime;
+
 
 	// 取消表格控件的当前选择
 	//SetTableSelection (panel, P_PRINT_TABLE, VAL_EMPTY_RECT );
 	// 取消表格控件的蓝色框
 	//SetActiveTableCell (panel, P_PRINT_TABLE, MakePoint (0, 0));
-	
-	SetCtrlAttribute(panel,P_PRINT_TABLE,ATTR_HIDE_HILITE,FALSE);
-	// 转辙机型号	
-		sprintf(str," %s",data->switchModel);	
-		//SetCtrlVal(panel,MEASURE_SWITCH_MODEL,str); 
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 1), str);
 
-	// 力传感器类型	
-		sprintf(str," %s",data->forceSensorType);	
-		//SetCtrlVal(panel,MEASURE_FORCE_SENSOR_TYPE,str); 
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 3), str);
-	// 转辙机编号		
-		sprintf(str," %s",data->switchNum);	
-		//SetCtrlVal(panel,MEASURE_SWITCH_NUM,str); 
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 2), str);
-	// 测试地点		
-		sprintf(str," %s",data->TestAddr);			
-		//SetCtrlVal(panel,MEASURE_TEST_ADDR,str); 
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 5), str);
-	// 测试人		
-		sprintf(str," %s",data->TestPerson);			
-		//SetCtrlVal(panel,MEASURE_TEST_PERSON,str); 
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 6), str);
+	SetCtrlAttribute(panel,P_PRINT_TABLE,ATTR_HIDE_HILITE,FALSE);
+	// 转辙机型号
+	sprintf(str," %s",data->switchModel);
+	//SetCtrlVal(panel,MEASURE_SWITCH_MODEL,str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 1), str);
+
+	// 力传感器类型
+	sprintf(str," %s",data->forceSensorType);
+	//SetCtrlVal(panel,MEASURE_FORCE_SENSOR_TYPE,str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 3), str);
+	// 转辙机编号
+	sprintf(str," %s",data->switchNum);
+	//SetCtrlVal(panel,MEASURE_SWITCH_NUM,str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 2), str);
+	// 测试地点
+	sprintf(str," %s",data->TestAddr);
+	//SetCtrlVal(panel,MEASURE_TEST_ADDR,str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 5), str);
+	// 测试人
+	sprintf(str," %s",data->TestPerson);
+	//SetCtrlVal(panel,MEASURE_TEST_PERSON,str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 6), str);
 	// 测试日期
-		testTime = data->TestTime;		
-		strftime(str,sizeof(str)," %Y年%m月%d日 %H:%M:%S",localtime(&testTime));
-		//SetCtrlVal (panel, MEASURE_TEST_TIME, str);		
-		SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 4), str);
-		return 0;
+	testTime = data->TestTime;
+	strftime(str,sizeof(str)," %Y年%m月%d日 %H:%M:%S",localtime(&testTime));
+	//SetCtrlVal (panel, MEASURE_TEST_TIME, str);
+	SetTableCellVal (panel, P_PRINT_TABLE, MakePoint (2, 4), str);
+	return 0;
 }
 
 #endif
@@ -1264,8 +1307,8 @@ int CVICALLBACK OnPrint (int panel, int control, int event,
 	if (event == EVENT_LEFT_CLICK)
 	{
 		PrintUserData(&g_UserData,panelPrint);
-		PlotData(CHANNEL_TYPE_ALL_DATA,panelPrint, P_PRINT_GRAPH);  
-		
+		PlotData(CHANNEL_TYPE_ALL_DATA,panelPrint, P_PRINT_GRAPH);
+
 		SetPrintAttribute(ATTR_ORIENTATION,VAL_PORTRAIT);
 		//SetPrintAttribute(ATTR_SYSTEM_PRINT_DIALOG_ONLY,TRUE);
 		int ret = PrintPanel(panelPrint,NULL,1,VAL_VISIBLE_AREA ,TRUE);
@@ -1274,36 +1317,37 @@ int CVICALLBACK OnPrint (int panel, int control, int event,
 	return 0;
 }
 
-int SaveData()
+int SaveData(char *fileName)
 {
 	FILE *fp;
-	if((fp = fopen("waveform.dat","wb"))==NULL)
+
+	if((fp = fopen(fileName,"wb"))==NULL)
 	{
 		goto Error;
 	}
-#if 1  
-	fwrite((void*)&g_UserData,sizeof(g_UserData),1,fp);// 保存转辙机用户输入的数据 
-#endif	
+#if 1
+	fwrite((void*)&g_UserData,sizeof(g_UserData),1,fp);// 保存转辙机用户输入的数据
+#endif
 	fwrite((void*)&g_Waveform,sizeof(g_Waveform),1,fp);// 保存转辙机采集到的波形
 
-Error:	
-	fclose(fp);
+Error:
+	if(fp)fclose(fp);
 	return 0;
 }
 
-int LoadWaveform()
+int LoadWaveform(char *fileName)
 {
 	FILE *fp;
-	if((fp = fopen("waveform.dat","rb"))==NULL)
+	if((fp = fopen(fileName,"rb"))==NULL)
 	{
 		goto Error;
 	}
-#if 1	
+#if 1
 	fread((void*)&g_UserData,sizeof(g_UserData),1,fp);// 读取转辙机用户输入的数据
 #endif
 	fread((void*)&g_Waveform,sizeof(g_Waveform),1,fp);// 读取转辙机采集到的波形
 Error:
-	fclose(fp);
+	if(fp)fclose(fp);
 	return 0;
 }
 
@@ -1318,14 +1362,63 @@ int CVICALLBACK OnSaveData (int panel, int control, int event,
 	return 0;
 }
 
+
+char* GetWaveFormPath()
+{
+	static char path[MAX_PATHNAME_LEN];
+	GetProjectDir(path);
+	sprintf(path,"%s\\waveform",path);
+	return path;
+}
+
+int LoadALLData()
+{
+	char fileName[MAX_PATHNAME_LEN];
+	// 取得用户要载入的文件名
+
+	if(FileSelectPopupEx(GetWaveFormPath(),"*.vif","","打开波形文件",VAL_LOAD_BUTTON ,0,1,fileName) != VAL_NO_FILE_SELECTED)
+	{
+		// 打开该文件载入数据
+		LoadWaveform(fileName);
+		// 以该数据绘制曲线
+		UpdatePlot();
+	}
+	else   // 用户放弃
+	{
+	}
+	return 0;
+}
+
 int CVICALLBACK OnOpenData (int panel, int control, int event,
 							void *callbackData, int eventData1, int eventData2)
 {
 	if(event == EVENT_LEFT_CLICK)
 	{
-		LoadWaveform();
-		UpdatePlot();
+		LoadALLData();
 	}
+	return 0;
+}
+
+
+
+int SaveALLData()
+{
+	char fullFileName[MAX_PATHNAME_LEN];
+	
+#if 0
+	strcpy(fullFileName,GetWaveFormPath());
+
+	//CreatWaveformName(fullFileName);
+	if(FileSelectPopupEx(GetWaveFormPath(),"*.dat","","保存波形",VAL_SAVE_BUTTON,1,1,fullFileName)
+			!= VAL_NO_FILE_SELECTED)
+	{
+		
+		SaveData(fullFileName);  // 存入文件，采集到的转辙机数据和用户数据
+	}
+#else	
+	sprintf(fullFileName,"%s\\%s",GetWaveFormPath(),g_FileName);
+	SaveData(fullFileName);  // 存入文件，采集到的转辙机数据和用户数据
+#endif	
 	return 0;
 }
 
@@ -1336,7 +1429,7 @@ int CVICALLBACK OnSaveUserData (int panel, int control, int event,
 	{
 		HidePanel(panel);
 		UpdateUserData(panel,TRUE);
-		SaveData();  // 存入文件，采集到的转辙机数据和用户数据
+		SaveALLData();
 	}
 	return 0;
 }
@@ -1347,7 +1440,7 @@ int CVICALLBACK OnCancelSaveUserData (int panel, int control, int event,
 	if(event == EVENT_LEFT_CLICK)
 	{
 		HidePanel(panel);
-	}	
+	}
 	return 0;
 }
 
@@ -1356,7 +1449,22 @@ int CVICALLBACK OnMeasureCancel (int panel, int control, int event,
 {
 	if (event == EVENT_LEFT_CLICK)
 	{
-		HidePanel(panel);		
-	}	
+		HidePanel(panel);
+	}
+	return 0;
+}
+
+int CVICALLBACK ONSwitchNumChange (int panel, int control, int event,
+								   void *callbackData, int eventData1, int eventData2)
+{
+	switch (event)
+	{
+		case EVENT_COMMIT:
+			char fileName[MAX_PATHNAME_LEN];
+			UpdateUserData(panel,TRUE);
+			CreatWaveformName(fileName);
+			SetCtrlVal(panel,USER_DATA_FILENAME,fileName);
+			break;
+	}
 	return 0;
 }
