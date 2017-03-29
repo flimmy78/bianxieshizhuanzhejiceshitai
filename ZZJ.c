@@ -1,5 +1,3 @@
-#include "Portable.h"
-
 //==============================================================================
 //
 // Title:		ZZJ
@@ -12,12 +10,8 @@
 
 //==============================================================================
 // Include files
-#include <NIDAQmx.h>
 #include <ansi_c.h>
 #include <windows.h>
-#include <ansi_c.h>
-#include <ansi_c.h>
-#include <ansi_c.h>
 #include <analysis.h>
 #include <cvirte.h>
 #include <userint.h>
@@ -25,6 +19,11 @@
 #include "Portable.h"
 #include "toolbox.h"
 #include "log.h"
+
+#include <NIDAQmx.h>
+
+
+//#define PORTABLE
 
 
 //==============================================================================
@@ -369,10 +368,28 @@ void RunGUI(TaskHandle task)
 	int error = 0;
 
 	//errChk (panelHandle = LoadPanel (0, "ZZJ.uir", PANEL));
+#if defined(PORTABLE)
 	errChk (panelMain    = LoadPanel (0, "Portable.uir", MAIN));
+#else	
+	errChk (panelMain    = LoadPanel (0, "Portable.uir", MAIN_DESK));
+    SetPanelAttribute (panelMain, ATTR_WINDOW_ZOOM, VAL_MAXIMIZE);	
+	//SetPanelPos(panelMain,0,0);
+#endif	
 	errChk (panelMeasure = LoadPanel (panelMain	, "Portable.uir", MEASURE));
 	errChk (panelSystem  = LoadPanel (panelMain	, "Portable.uir", SYSTEM));
 	errChk (panelGraph   = LoadPanel (panelMain , "Portable.uir", GRAPH));
+#if defined(PORTABLE)	
+#else
+	int attr;
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_TOP,&attr);
+	SetPanelAttribute(panelGraph,ATTR_TOP,attr);
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_LEFT,&attr);
+	SetPanelAttribute(panelGraph,ATTR_WIDTH,attr);
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_HEIGHT,&attr);
+	SetPanelAttribute(panelGraph,ATTR_HEIGHT,attr);
+	
+#endif	
+	
 	errChk (panelPrint   = LoadPanel (panelMain , "Portable.uir", P_PRINT));
 	errChk (panelUserData = LoadPanel(panelMain , "Portable.uir", USER_DATA));
 
@@ -396,6 +413,7 @@ Error:
 
 
 /// HIFN The main entry-point function.
+#if defined(PORTABLE)
 int main (int argc, char *argv[])
 {
 	int DAQmxError = 0;
@@ -412,6 +430,20 @@ Error:
 	DAQmxClearTask(task);
 	return 0;
 }
+#else
+
+int main (int argc, char *argv[])
+{
+	/* initialize and load resources */
+	if(InitCVIRTE (0, argv, 0)==0)
+		return -1;
+
+	RunGUI(NULL);
+
+Error:
+	return 0;
+}
+#endif
 
 //==============================================================================
 // UI callback function prototypes
@@ -423,8 +455,12 @@ int CVICALLBACK OnExitPrograme (int panel, int control, int event,
 	{
 		case EVENT_LEFT_CLICK:
 		case EVENT_LEFT_DOUBLE_CLICK:
+#if defined(PORTABLE) 			
 			g_info.running = RUN_MODEL_QUIT;
-			//QuitUserInterface (0);
+#else
+			QuitUserInterface (0);			
+#endif
+			
 	}
 	return 0;
 }
@@ -480,8 +516,8 @@ void Measure(int isStart)
 		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,FALSE);
 		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,FALSE);
 		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,FALSE);
+		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,FALSE);
+		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,FALSE);
 
 		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS, g_info.scalingMode[0],g_info.min[0],g_info.max[0]);
 		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,g_info.scalingMode[1],g_info.min[1],g_info.max[1]);
@@ -507,8 +543,8 @@ void Measure(int isStart)
 		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,TRUE);
 		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,TRUE);
 		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
+		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
+		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
 
 #if 1
 		UpdatePlot();
@@ -1111,6 +1147,7 @@ int TBDisplayTime( void )
 	return 0;
 }
 #else
+
 int TBDisplayTime( void )
 {
 	time_t rawTime;
@@ -1120,8 +1157,11 @@ int TBDisplayTime( void )
 	timeinfo = localtime(&rawTime);
 
 	strftime(acData,sizeof(acData),"%H:%M:%S",timeinfo);
-
+#ifdef PORTABLE
 	SetCtrlVal (panelMain, MAIN_TM_TIME, acData);
+#else
+	SetCtrlVal (panelMain, MAIN_DESK_TM_TIME, acData);
+#endif	
 	return 0;
 }
 #endif

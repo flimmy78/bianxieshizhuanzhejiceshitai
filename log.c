@@ -17,6 +17,7 @@ log数据。有如下功能
 
 
 #include <WINDOWS.H>
+#include <ansi_c.h>
 
 #include "log.h"
 #include <TIME.H>
@@ -149,11 +150,17 @@ extern "C" {
 		if(isFirst)
 		{
 			isFirst = 0;
-			fileHandle = fopen (file_name, "w");
+			if((fileHandle = fopen (file_name, "w"))==NULL){
+				system("cmd.exe /c mkdir Log");
+				fileHandle = fopen (file_name, "w");
+			};
 		}
 		else
 		{
-			fileHandle = fopen (file_name, "a");
+			if((fileHandle = fopen (file_name, "a"))==NULL){
+				system("cmd.exe /c mkdir Log");
+				fileHandle = fopen (file_name, "a");
+			};
 		}
 #else
 		{
@@ -186,10 +193,10 @@ extern "C" {
 	int LogErr2File(char file_name[],char * fmt,va_list args)
 	{
 
-		//char *datee;
-		//char *timee;
+		char *datee;
+		char *timee;
 		FILE *fileHandle;
-		//int sec,min,hour,year,day,mon;
+		int sec,min,hour,year,day,mon;
 
 		char buffer[200];
 		char report[200];
