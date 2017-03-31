@@ -20,11 +20,16 @@
 #include "toolbox.h"
 #include "log.h"
 
-#include <NIDAQmx.h>
-
-
 //#define PORTABLE
+#if defined(PORTABLE) 
+	#include <NIDAQmx.h> 
+#else
+	typedef void*              TaskHandle;
+	typedef signed long        int32;
+	typedef double             float64;
+#endif
 
+//#include <NIDAQmx.h>
 
 //==============================================================================
 // Constants
@@ -499,6 +504,7 @@ int UpdatePlot()
 	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1);
 	return 0;
 }
+#if defined(PORTABLE)
 // 开始测量
 void Measure(int isStart)
 {
@@ -546,9 +552,7 @@ void Measure(int isStart)
 		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
 		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
 
-#if 1
 		UpdatePlot();
-#endif
 		// 更新转辙机参数面板
 		UpdateUserData(panelMeasure,FALSE);
 
@@ -559,6 +563,13 @@ Error:
 	DAQmxReportErr(DAQmxError);
 	return;
 }
+#else
+// 开始测量
+void Measure(int isStart)
+{
+	return;
+}
+#endif
 
 
 int UpdateUserData(int panel,BOOL isSave)
@@ -822,6 +833,7 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	return 0;
 }
+#if defined(PORTABLE) 
 int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
 {
 	int32 DAQmxError = DAQmxSuccess;
@@ -865,7 +877,10 @@ Error:
 	}
 	return 0;
 }
+#endif
 
+
+#if defined(PORTABLE)
 int ReadMeasureAndToWaveform()
 {
 
@@ -978,6 +993,8 @@ Error:
 	}
 	return 0;
 }
+#endif 
+
 void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压：绿色，电压基准：蓝色，转换力：白色
 {
 	double* waveform;
@@ -1025,7 +1042,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 
 }
 
-
+#if defined(PORTABLE)
 int MeasureDisplayAndAutoStart()
 {
 	if(g_info.running == RUN_MODEL_STOP) // 没有在测量，只显示当前值，不绘制曲线
@@ -1075,46 +1092,20 @@ int MeasureDisplayAndAutoStart()
 	}
 	return 0;
 }
-#if 0
-int CVICALLBACK OnTimer_Measure (int panel, int control, int event,
-								 void *callbackData, int eventData1, int eventData2)
-{
-	static int n;
-	static int curTick;
-	switch (event)
-	{
-		case EVENT_TIMER_TICK:
-			if(g_info.running == RUN_MODEL_RUNING)
-			{
-				curTick = GetTickCount();
-				n = (curTick - g_info.startTick - g_info.processedTick)/100;
-				g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
-				for(int i=0; i<n; i++)
-				{
-					MeasureDisplayAndAutoStart();
-				}
-			}
-			else
-			{
-				MeasureDisplayAndAutoStart();
-			}
-			break;
-	}
-	return 0;
-}
-#else
+#endif 
 int CVICALLBACK OnTimer_Measure (int panel, int control, int event,
 								 void *callbackData, int eventData1, int eventData2)
 {
 	switch (event)
 	{
 		case EVENT_TIMER_TICK:
+			#if defined(PORTABLE)  
 			MeasureDisplayAndAutoStart();
+			#endif 
 			break;
 	}
 	return 0;
 }
-#endif
 
 #define TIME_DISPLAY_VER   3
 #if TIME_DISPLAY_VER == 1
@@ -1165,6 +1156,8 @@ int TBDisplayTime( void )
 	return 0;
 }
 #endif
+
+
 int CVICALLBACK OnTimer_Watch (int panel, int control, int event,
 							   void *callbackData, int eventData1, int eventData2)
 {

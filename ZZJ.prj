@@ -9,7 +9,7 @@ IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
 VXIplug&play Framework Dir = "/C/Program Files (x86)/IVI Foundation/VISA/winnt"
 IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
 VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
-Number of Files = 4
+Number of Files = 5
 Target Type = "Executable"
 Flags = 16
 Copied From Locked InstrDrv Directory = False
@@ -45,6 +45,19 @@ File Type = "CSource"
 Res Id = 2
 Path Is Rel = True
 Path Rel To = "Project"
+Path Rel Path = "temp.c"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/temp.c"
+Exclude = True
+Compile Into Object File = False
+Project Flags = 0
+Folder = "Source Files"
+Folder Id = 0
+
+[File 0003]
+File Type = "CSource"
+Res Id = 3
+Path Is Rel = True
+Path Rel To = "Project"
 Path Rel Path = "ZZJ.c"
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 Exclude = False
@@ -53,9 +66,9 @@ Project Flags = 0
 Folder = "Source Files"
 Folder Id = 0
 
-[File 0003]
+[File 0004]
 File Type = "User Interface Resource"
-Res Id = 3
+Res Id = 4
 Path Is Rel = True
 Path Rel To = "Project"
 Path Rel Path = "Portable.uir"
@@ -65,14 +78,14 @@ Project Flags = 0
 Folder = "User Interface Files"
 Folder Id = 1
 
-[File 0004]
+[File 0005]
 File Type = "Function Panel"
-Res Id = 4
+Res Id = 5
 Path Is Rel = True
 Path Rel To = "CVI"
 Path Rel To Override = "CVI"
 Path Rel Path = "toolslib/toolbox/asynctmr.fp"
-Path = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/asynctmr.fp"
+Path = "/c/program files (x86)/national instruments/cvi2015/toolslib/toolbox/asynctmr.fp"
 Exclude = False
 Project Flags = 0
 Folder = "Instrument Files"
@@ -108,7 +121,7 @@ Stack Reserve = 1048576
 Stack Commit = 4096
 Image Base Address = 4194304
 Image Base Address x64 = 4194304
-Compiler Defines = "/DWIN32_LEAN_AND_MEAN"
+Compiler Defines = "/DWIN32_LEAN_AND_MEAN /DPORTABLE"
 Sign = False
 Sign Store = ""
 Sign Certificate = ""
@@ -193,7 +206,7 @@ Stack Reserve = 1048576
 Stack Commit = 4096
 Image Base Address = 4194304
 Image Base Address x64 = 4194304
-Compiler Defines = "/DWIN32_LEAN_AND_MEAN"
+Compiler Defines = "/DWIN32_LEAN_AND_MEAN  /DPORTABLE"
 Sign = False
 Sign Store = ""
 Sign Certificate = ""
@@ -364,7 +377,7 @@ Image Base Address = 4194304
 Image Base Address x64 = 4194304
 
 [Compiler Defines]
-Compiler Defines = "/DWIN32_LEAN_AND_MEAN"
+Compiler Defines = "/DWIN32_LEAN_AND_MEAN  /DPORTABLE"
 
 [Create Executable]
 Executable File_Debug Is Rel = True

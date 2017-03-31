@@ -32,8 +32,8 @@
 #define  GRAPH_DECORATION_2               17      /* control type: deco, callback function: (none) */
 #define  GRAPH_DECORATION                 18      /* control type: deco, callback function: (none) */
 #define  GRAPH_GRAPH                      19      /* control type: graph, callback function: OnGraph */
-#define  GRAPH_TEXTMSG_11                 20      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG                    21      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG                    20      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_11                 21      /* control type: textMsg, callback function: (none) */
 
 #define  MAIN                             2
 #define  MAIN_STEP                        2       /* control type: textMsg, callback function: (none) */
@@ -138,12 +138,12 @@
 #define  USER_DATA_DECORATION             2       /* control type: deco, callback function: (none) */
 #define  USER_DATA_PIC_CANCEL             3       /* control type: picture, callback function: OnCancelSaveUserData */
 #define  USER_DATA_PIC_SAVE               4       /* control type: picture, callback function: OnSaveUserData */
-#define  USER_DATA_TEST_PERSON            5       /* control type: string, callback function: (none) */
+#define  USER_DATA_SWITCH_NUM             5       /* control type: string, callback function: ONSwitchNumChange */
 #define  USER_DATA_TEST_ADDR              6       /* control type: string, callback function: (none) */
-#define  USER_DATA_FILENAME               7       /* control type: string, callback function: (none) */
-#define  USER_DATA_TEST_TIME              8       /* control type: string, callback function: (none) */
-#define  USER_DATA_FORCE_SENSOR_TYPE      9       /* control type: string, callback function: (none) */
-#define  USER_DATA_SWITCH_NUM             10      /* control type: string, callback function: ONSwitchNumChange */
+#define  USER_DATA_TEST_PERSON            7       /* control type: string, callback function: (none) */
+#define  USER_DATA_FILENAME               8       /* control type: string, callback function: (none) */
+#define  USER_DATA_TEST_TIME              9       /* control type: string, callback function: (none) */
+#define  USER_DATA_FORCE_SENSOR_TYPE      10      /* control type: string, callback function: (none) */
 #define  USER_DATA_RADIOBUTTON            11      /* control type: radioButton, callback function: (none) */
 #define  USER_DATA_SWITCH_MODEL           12      /* control type: ring, callback function: (none) */
 
