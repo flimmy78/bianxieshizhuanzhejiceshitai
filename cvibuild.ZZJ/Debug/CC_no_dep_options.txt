@@ -1,1 +1,0 @@
--force-include-file "log.c";"\\zpa\working\便携式转辙机拉力测试仪\working\log.c" -force-include-file "temp.c";"\\zpa\working\便携式转辙机拉力测试仪\working\temp.c" -force-include-file "ZZJ.c";"\\zpa\working\便携式转辙机拉力测试仪\working\ZZJ.c" 
