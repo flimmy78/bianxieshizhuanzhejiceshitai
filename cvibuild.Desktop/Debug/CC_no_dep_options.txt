@@ -1,0 +1,1 @@
+-force-include-file "desktop.c";"d:\document\zhangpei\working\便携式转辙机拉力测试仪\working\desktop.c" -force-include-file "log.c";"d:\document\zhangpei\working\便携式转辙机拉力测试仪\working\log.c" -force-include-file "temp.c";"d:\document\zhangpei\working\便携式转辙机拉力测试仪\working\temp.c" -force-include-file "ZZJ.c";"d:\document\zhangpei\working\便携式转辙机拉力测试仪\working\ZZJ.c" 

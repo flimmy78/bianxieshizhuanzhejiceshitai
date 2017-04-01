@@ -70,20 +70,20 @@ Disk Date = 3573689269
 In Projects = "1,2,"
 Window Top = 36
 Window Left = 10
-Window Z-Order = 1
-Source Window State = "1,811,811,811,8,11,11,0,3,115,0,0,0,0,0,21,0,0,811,8,585,1238,1,0,"
+Window Z-Order = 2
+Source Window State = "1,1208,1208,1208,11,25,25,0,0,98,0,0,0,0,0,22,1202,0,1211,52,585,1238,1,0,"
 Line Tags = "23,507,"
 
 [File 0003]
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
 File Type = "User Interface Resource"
-Disk Date = 3573783750
+Disk Date = 3573862000
 In Projects = "1,2,"
 Window Top = 110
 Window Left = 37
 Window Height = 587
 Window Width = 1024
-Window Z-Order = 3
+Window Z-Order = 1
 
 [File 0004]
 Path = "/c/ProgramData/National Instruments/CVI2015/include/advanlys.h"
@@ -92,7 +92,7 @@ Disk Date = 3548854800
 In Projects = ""
 Window Top = 64
 Window Left = 26
-Window Z-Order = 2
+Window Z-Order = 3
 Source Window State = "1,1553,1553,1553,27,30,30,0,3,98,0,0,0,0,0,22,1547,0,1553,27,585,1238,1,0,"
 
 [File 0005]
