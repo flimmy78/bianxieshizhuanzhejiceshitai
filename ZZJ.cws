@@ -10,7 +10,7 @@ IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
 VXIplug&play Framework Dir = "/C/Program Files (x86)/IVI Foundation/VISA/winnt"
 VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
 Number of Projects = 2
-Active Project = 1
+Active Project = 2
 Project 0001 = "ZZJ.prj"
 Project 0002 = "Desktop.prj"
 Project 0002 Folder 其他 Collapsed = True
@@ -33,7 +33,7 @@ Save Changes Before Compiling = "Always"
 Hide Windows = False
 Break At First Statement = False
 Sort Type = "File Name"
-Number of Opened Files = 3
+Number of Opened Files = 6
 Window Confinement Region Enabled = True
 MainColumnWidth = 220
 FileDateColumnWidth = 70
@@ -66,18 +66,18 @@ In Projects = "1,"
 [File 0002]
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 File Type = "CSource"
-Disk Date = 3573689269
+Disk Date = 3573875947
 In Projects = "1,2,"
 Window Top = 36
 Window Left = 10
 Window Z-Order = 2
-Source Window State = "1,1208,1208,1208,11,25,25,0,0,98,0,0,0,0,0,22,1202,0,1211,52,585,1238,1,0,"
-Line Tags = "23,507,"
+Source Window State = "1,522,522,522,42,46,46,0,0,98,0,0,0,0,0,22,248,0,259,8,585,1238,1,0,"
+Line Tags = "23,539,551,1051,"
 
 [File 0003]
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
 File Type = "User Interface Resource"
-Disk Date = 3573862000
+Disk Date = 3573877302
 In Projects = "1,2,"
 Window Top = 110
 Window Left = 37
@@ -92,17 +92,18 @@ Disk Date = 3548854800
 In Projects = ""
 Window Top = 64
 Window Left = 26
-Window Z-Order = 3
-Source Window State = "1,1553,1553,1553,27,30,30,0,3,98,0,0,0,0,0,22,1547,0,1553,27,585,1238,1,0,"
+Window Z-Order = 4
+Source Window State = "1,758,758,758,37,44,44,0,3,98,0,0,0,0,0,22,746,0,758,37,585,1238,1,0,"
 
 [File 0005]
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
 File Type = "CSource"
-Disk Date = 3573636927
+Disk Date = 3573876349
 In Projects = "1,2,"
 Window Top = 38
 Window Left = 10
-Source Window State = "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,162,77,371,1024,1,0,"
+Window Z-Order = 3
+Source Window State = "1,0,0,0,0,0,0,0,0,80,0,0,0,0,0,14,296,0,311,39,371,1024,1,0,"
 
 [File 0006]
 Path = "//zpa/working/便携式转辙机拉力测试仪/working/temp.c"
@@ -135,10 +136,33 @@ File Type = "Unknown"
 Disk Date = 3573691783
 In Projects = "2,"
 
+[File 0010]
+Path = "/c/Program Files (x86)/National Instruments/CVI2015/include/userint.h"
+File Type = "Include"
+Disk Date = 3548854800
+In Projects = ""
+Window Top = 38
+Window Left = 10
+Window Z-Order = 6
+Source Window State = "1,1386,1386,1386,8,23,23,0,3,80,0,0,0,0,0,23,1374,0,1386,8,587,1024,1,0,"
+
+[File 0011]
+Path = "/c/Program Files (x86)/National Instruments/CVI2015/include/cvidef.h"
+File Type = "Include"
+Disk Date = 3548854800
+In Projects = ""
+Window Top = 74
+Window Left = 29
+Window Z-Order = 5
+Source Window State = "1,301,301,301,28,35,35,0,3,80,0,0,0,0,0,14,294,0,301,28,371,1024,1,0,"
+
 [Tab Order]
 Tab 0001 = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
 Tab 0002 = "/c/ProgramData/National Instruments/CVI2015/include/advanlys.h"
 Tab 0003 = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Tab 0004 = "/c/Program Files (x86)/National Instruments/CVI2015/include/userint.h"
+Tab 0005 = "/c/Program Files (x86)/National Instruments/CVI2015/include/cvidef.h"
+Tab 0006 = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
 
 [Default Build Config 0001 Debug]
 Generate Browse Info = True

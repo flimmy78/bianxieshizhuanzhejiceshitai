@@ -196,7 +196,7 @@ extern "C" {
 		char *datee;
 		char *timee;
 		FILE *fileHandle;
-		int sec,min,hour,year,day,mon;
+		//int sec,min,hour,year,day,mon;
 
 		char buffer[200];
 		char report[200];

@@ -313,6 +313,7 @@ Error:
 int WaveformGet(CHANNEL channel,CHANNEL_TYPE channelType,double **data,int* len,double* x,double* increment)
 {
 	int ret=0;
+	double xStart=0; // 波形起始点/最后更新开始点(时间)x坐标
 	ChannelDataPoint chData;
 
 	if(WaveformChannel2Addr(channel,&chData)<0)
@@ -334,16 +335,23 @@ int WaveformGet(CHANNEL channel,CHANNEL_TYPE channelType,double **data,int* len,
 			{
 				*data -=1;
 				*len +=1;
-				*x = (*chData.lastAddr - chData.addr -1)*(*chData.increment);
+				xStart = (*chData.lastAddr - chData.addr -1)*(*chData.increment);
 			}
 			else
 			{
-				*x = 0;
+				xStart = 0;
 			}
+			break;
+		default:
+			ERR1("WaveformGet 参数错误，channelType：%d",channelType);
+			goto Error;
 			break;
 	}
 	//*x = (*chData.lastAddr - chData.addr)*(*chData.increment);
-	*increment = *chData.increment;
+	if(increment!=NULL)
+		*increment = *chData.increment;
+	if(x != NULL)
+		*x = xStart;
 Error:
 	return ret;
 }
@@ -489,9 +497,10 @@ int CVICALLBACK OnStartMeasure (int panel, int control, int event,
 	}
 	return 0;
 }
+#if 0  // 以最大最小值重设坐标轴
 int UpdatePlot()
 {
-	// 打开抗锯齿，重新绘制一遍图像。
+	// 重绘制，依照采集到的最大值重设纵坐标轴。
 	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0);
 	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
 	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE);
@@ -504,6 +513,41 @@ int UpdatePlot()
 	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1);
 	return 0;
 }
+#else // 以最大值重设坐标轴
+int SetWaveformAxies(CHANNEL channel,int axis)
+{
+	double* waveform;
+	double max,min,maxABS;
+	int len,imax,imin;	
+	WaveformGet(channel,CHANNEL_TYPE_ALL_DATA,&waveform,&len,NULL,NULL);	// 力波形
+	MaxMin1D(waveform,len,&max,&imax,&min,&imin);
+	max = fabs(max);
+	min = fabs(min);
+	maxABS = max>min?max:min; // 取绝对值的最大值。
+	maxABS = (int)maxABS +1;
+
+	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,axis,VAL_MANUAL,-maxABS,maxABS);
+	return 0;
+}
+
+int UpdatePlot()
+{
+	// 重绘制，依照采集到的最大值重设纵坐标轴。
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0); // 更新坐标轴参数期间，禁止画面更新
+	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE); // 打开抗锯齿
+
+	SetWaveformAxies(CHANNEL_FORCE,VAL_LEFT_YAXIS);
+	SetWaveformAxies(CHANNEL_I,VAL_RIGHT_YAXIS);
+
+	PlotData(CHANNEL_TYPE_ALL_DATA,g_info.chartPanel, g_info.chartCtrl);
+
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1); // 更新画面
+	return 0;
+}
+#endif
+
 #if defined(PORTABLE)
 // 开始测量
 void Measure(int isStart)
@@ -552,7 +596,7 @@ void Measure(int isStart)
 		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
 		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
 
-		UpdatePlot();
+		UpdatePlot(); // 重绘制，依照采集到的最大值重设纵坐标轴。
 		// 更新转辙机参数面板
 		UpdateUserData(panelMeasure,FALSE);
 

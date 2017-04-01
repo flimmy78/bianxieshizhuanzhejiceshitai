@@ -32,8 +32,11 @@
 #define  GRAPH_DECORATION_2               17      /* control type: deco, callback function: (none) */
 #define  GRAPH_DECORATION                 18      /* control type: deco, callback function: (none) */
 #define  GRAPH_GRAPH                      19      /* control type: graph, callback function: OnGraph */
-#define  GRAPH_TEXTMSG                    20      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_11                 21      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_14                 20      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_13                 21      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG                    22      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_12                 23      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_11                 24      /* control type: textMsg, callback function: (none) */
 
 #define  MAIN                             2
 #define  MAIN_STEP                        2       /* control type: textMsg, callback function: (none) */
