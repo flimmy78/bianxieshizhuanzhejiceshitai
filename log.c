@@ -193,8 +193,8 @@ extern "C" {
 	int LogErr2File(char file_name[],char * fmt,va_list args)
 	{
 
-		char *datee;
-		char *timee;
+		//char *datee;
+		//char *timee;
 		FILE *fileHandle;
 		//int sec,min,hour,year,day,mon;
 

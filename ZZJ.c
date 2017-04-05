@@ -29,7 +29,7 @@
 	typedef double             float64;
 #endif
 
-//#include <NIDAQmx.h>
+//#define SIMULATE_INPUT  //  软件模拟输入数据，注释掉本行则使用采集卡
 
 //==============================================================================
 // Constants
@@ -216,7 +216,8 @@ void WaveformInit(void)
 	WaveformClr(CHANNEL_V);		// 电压通道
 	WaveformClr(CHANNEL_VREF);  // 参考通道
 	WaveformClr(CHANNEL_FORCE); // 力通道
-	g_Waveform.IIncrement = 0.02;     // 1/50Hz= 0.02s
+	//g_Waveform.IIncrement = 0.02;     // 1/50Hz= 0.02s
+	g_Waveform.IIncrement = 0.10;     // 250/2500
 	g_Waveform.VIncrement = 0.02;
 	g_Waveform.VRefIncrement = 1.0/SAMPLE_RATE;
 	g_Waveform.forceIncrement= 1.0/100;  // 每秒100次为力传感器变化的频率上限
@@ -520,13 +521,15 @@ int SetWaveformAxies(CHANNEL channel,int axis)
 	double max,min,maxABS;
 	int len,imax,imin;	
 	WaveformGet(channel,CHANNEL_TYPE_ALL_DATA,&waveform,&len,NULL,NULL);	// 力波形
-	MaxMin1D(waveform,len,&max,&imax,&min,&imin);
-	max = fabs(max);
-	min = fabs(min);
-	maxABS = max>min?max:min; // 取绝对值的最大值。
-	maxABS = (int)maxABS +1;
+	if(len>0){
+		MaxMin1D(waveform,len,&max,&imax,&min,&imin);
+		max = fabs(max);
+		min = fabs(min);
+		maxABS = max>min?max:min; // 取绝对值的最大值。
+		maxABS = (int)maxABS +1;
 
-	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,axis,VAL_MANUAL,-maxABS,maxABS);
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,axis,VAL_MANUAL,-maxABS,maxABS);
+	}
 	return 0;
 }
 
@@ -753,30 +756,61 @@ int CVICALLBACK OnSystem (int panel, int control, int event,
 	return 0;
 }
 
-
-int DisplayData()
+int RMSWin(double rawData[],ssize_t len,double *val)
 {
-	double* data;
-	double val;
-	// 显示电压(有效值)，电流(有效值)，力
-	data = g_Waveform.rawData[CHANNEL_I];
-	RMS(data,g_info.numSampsPerChan,&val);// 电流
-	SetCtrlVal(panelMain,MAIN_NUM_I,val);
+	double rms = 0;
+	double data[len];
+	
+	memcpy(data,rawData,len * sizeof(double));
+	HanWin(data,len);
+	RMS(data,len,&rms);// 有效值
+	*val = rms/sqrt(3.0/8.0);
+	return 0;
+}
 
-	data = g_Waveform.rawData[CHANNEL_V];
-	RMS(data,g_info.numSampsPerChan,&val);// 电压
+int MedianWin(double rawData[],ssize_t len,double *val)
+{
+	double median = 0;
+	double data[len];
+	
+	memcpy(data,rawData,len * sizeof(double));
+	HanWin(data,len);
+	Median(data,len,&median);// 均值
+	*val = 2*median;
+	return 0;
+}
+
+int MeterDisplay()
+{
+	double *rawData;
+	double val;
+	
+	// 显示电压(有效值)，电流(有效值)，力
+	ssize_t dataLen = g_info.numSampsPerChan;
+	// 电流	
+	rawData = g_Waveform.rawData[CHANNEL_I];
+	RMSWin(rawData,dataLen,&val);
+	SetCtrlVal(panelMain,MAIN_NUM_I,val);
+	
+	// 电压
+	rawData = g_Waveform.rawData[CHANNEL_V];
+	RMSWin(rawData,dataLen,&val);// 电压
 	SetCtrlVal(panelMain,MAIN_NUM_V,val);
 
-	data = g_Waveform.rawData[CHANNEL_VREF];
-	RMS(data,g_info.numSampsPerChan,&val);// 电压基准
+	// 电压基准
+	rawData = g_Waveform.rawData[CHANNEL_VREF];
+	MedianWin(rawData,dataLen,&val);// 电压基准的均值。(电压基准为直流电压，均值测量更加准确。)
 	SetCtrlVal(panelMain,MAIN_NUM_VREF,val);
 
-	data = g_Waveform.rawData[CHANNEL_FORCE];
-	RMS(data,g_info.numSampsPerChan,&val);// 动作力
+	// 力
+	rawData = g_Waveform.rawData[CHANNEL_FORCE];
+	MedianWin(rawData,dataLen,&val);
 	SetCtrlVal(panelMain,MAIN_NUM_FORCE,val);
 
 	return 0;
 }
+
+
 double MaxDoubleArray(double *array,int len)
 {
 	double max;
@@ -821,7 +855,11 @@ int isAutoStart()
 
 	return ret;
 }
-
+/*
+ 功能：原始采样数据转换为测试数据。真有效值变换。
+ 输入：rawData
+ 输出：WaveformSet
+*/
 int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
 {
 
@@ -841,15 +879,22 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 	}
 
 	// 电流
+#if 0	
 	data = rawData[CHANNEL_I];
 	for(int i=0; i<numRMS; ++i)
 	{
 		RMS(data+i*sampNumPerCycle,sampNumPerCycle,&waveform[i]);
 	}
 	WaveformSet(CHANNEL_I,waveform,numRMS,initialX);
+#else
+	data = g_Waveform.rawData[CHANNEL_I];
+	RMSWin(data,g_info.numSampsPerChan,&waveform[0]);
+	WaveformSet(CHANNEL_I,waveform,1,initialX/5.0);
+#endif
 
 
 	// 电压
+#if 1	
 	data = rawData[CHANNEL_V];
 	for(int i=0; i<numRMS; ++i)
 	{
@@ -858,6 +903,11 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	WaveformSet(CHANNEL_V,waveform,numRMS,initialX);
 	initialX +=  numRMS;
+#else
+	data = rawData[CHANNEL_V]; 
+	RMSWin(data,g_info.numSampsPerChan,&waveform[0]);
+	WaveformSet(CHANNEL_V,waveform,1,initialX/5.0);	
+#endif
 
 
 	// 电压基准
@@ -877,7 +927,50 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	return 0;
 }
+
+
 #if defined(PORTABLE) 
+#if defined(SIMULATE_INPUT) // 软件模拟输入数据
+#define SIMULATE_FREQUENCY 20.0/2500 // 归一化频率。波形频率/采样频率。50Hz/2500Hz
+#define SIMULATE_PHASE 2.0  // 初始相位。单位°。360为一周。
+int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
+{
+	int32 DAQmxError = DAQmxSuccess; 	
+	float64 *data = NULL;
+	uInt32 numChannels = 4;//4通道
+	uInt32 dataSize;
+	double phase = SIMULATE_PHASE;
+
+
+	dataSize = numChannels * g_info.numSampsPerChan;
+	DAQmxNullChk(data = (float64 *)malloc (dataSize * sizeof(float64)));
+
+	int len = g_info.numSampsPerChan;
+	int channel=0;
+	// 电流
+	SineWave(len,3.0*sqrt(2),SIMULATE_FREQUENCY	,&phase,data+len*channel);
+	channel ++;
+	// 电压
+	SineWave(len,1.0*sqrt(2),SIMULATE_FREQUENCY	,&phase,data+len*channel);
+	channel ++;	
+	// 电压基准 2.5V
+	Set1D(data+len*channel,len,2.5);
+	channel ++;	
+	// 力
+	//SineWave(len,10,1.0/2500	,&phase,data+len*channel);
+	Set1D(data+len*channel,len,5.0);
+
+	for(channel=0; channel<numChannels; channel++)
+	{
+		memcpy(rawData[channel],data+len*channel,len*sizeof(double));
+	}
+
+Error:
+	if (data)
+		free (data);
+	return 0;
+}
+#else   // 使用硬件采集卡
 int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
 {
 	int32 DAQmxError = DAQmxSuccess;
@@ -921,6 +1014,7 @@ Error:
 	}
 	return 0;
 }
+#endif
 #endif
 
 
@@ -1095,7 +1189,7 @@ int MeasureDisplayAndAutoStart()
 		{
 			ReadMeasure(g_Waveform.rawData);
 			RawData2Waveform(FALSE,g_Waveform.rawData);
-			DisplayData();
+			MeterDisplay();  // 在仪表面板显示测量值
 			if(isAutoStart())
 			{
 				Measure(TRUE);
@@ -1107,7 +1201,7 @@ int MeasureDisplayAndAutoStart()
 	}
 	else if(g_info.running == RUN_MODEL_RUNING)     // 正在测量
 	{
-		int maxTime_ms = 15*1000;	   // 只测量15秒内的数据
+		int maxTime_ms = 15.1*1000;	   // 只测量15秒内的数据
 		int curTick = GetTickCount();
 		if(curTick > g_info.startTick + maxTime_ms)
 			curTick = g_info.startTick + maxTime_ms;
@@ -1117,7 +1211,7 @@ int MeasureDisplayAndAutoStart()
 		{
 			ReadMeasure(g_Waveform.rawData);
 			RawData2Waveform(TRUE,g_Waveform.rawData);
-			DisplayData();
+			MeterDisplay();
 			//ReadMeasureAndToWaveform();
 			PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);
 		}
