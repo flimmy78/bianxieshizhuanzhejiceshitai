@@ -29,7 +29,7 @@
 	typedef double             float64;
 #endif
 
-//#define SIMULATE_INPUT  //  Èí¼şÄ£ÄâÊäÈëÊı¾İ£¬×¢ÊÍµô±¾ĞĞÔòÊ¹ÓÃ²É¼¯¿¨
+#define SIMULATE_INPUT  //  Èí¼şÄ£ÄâÊäÈëÊı¾İ£¬×¢ÊÍµô±¾ĞĞÔòÊ¹ÓÃ²É¼¯¿¨
 
 //==============================================================================
 // Constants
@@ -92,9 +92,12 @@ typedef enum
 
 typedef struct
 {
-	double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME];// Ö±½Ó´Ó²É¼¯¿¨¶ÁÈ¡µÄÔ­Ê¼Êı¾İ¡£Ã¿Í¨µÀÈİÁ¿SAMPLE_RATE * SAMPLE_MAX_TIME
+	double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE];// µ¥´Î´Ó²É¼¯¿¨¶ÁÈ¡µÄÔ­Ê¼Êı¾İ¡£Ã¿Í¨µÀÈİÁ¿Îª1Ãë(SAMPLE_RATE)
 	// Í¨µÀ£º0£ºµçÁ÷£¬1£ºµçÑ¹£¬2£º»ù×¼£¬3£ºÁ¦
-	int    rawDataLen;// Ô­Ê¼Êı¾İµÄ³¤¶È
+	int    sampleDataLen;// µ¥´Î¶ÁÈ¡µÄÔ­Ê¼Êı¾İµÄ³¤¶È
+	
+	double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME];; // Ò»´Î²âÁ¿µÄ²É¼¯¿¨Êı¾İ¡£Ê±¼ä´Ó²âÁ¿¿ªÊ¼µ½²âÁ¿½áÊø
+	int    rawDataLen;   // Ò»´Î²âÁ¿µÄ²É¼¯¿¨Êı¾İµÄ³¤¶È¡£Ëæ×Å²»¶Ï¶ÁÈ¡²É¼¯¿¨Êı¾İ£¬¸Ã³¤¶ÈÊı¾İÔö´ó¡£
 
 	double 	force[100 * SAMPLE_MAX_TIME];	// Á¦Êı×é£¬ÓÃÓÚ»æÖÆ²¨ĞÎÍ¼¡£Ã¿Ãë100´ÎÎªÁ¦´«¸ĞÆ÷±ä»¯µÄÆµÂÊÉÏÏŞ¡£
 	double 	forceIncrement;		 			// ¼ä¸ôÊ±¼ä
@@ -121,6 +124,7 @@ typedef struct
 	int    	VRefLastLen;
 } Waveform;
 Waveform g_Waveform;
+int g_ConvertedLen;
 
 char g_FileName[MAX_PATHNAME_LEN];// ²¨ĞÎÎÄ¼şÃû
 // ÉèÖÃ²¨ĞÎ²ÎÊı
@@ -198,6 +202,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl);  // µçÁ÷:ºìÉ«£¬µçÑ
 int UpdateUserData(int panel,BOOL isSave);	// panel£ºĞèÒª¸üĞÂµÄÃæ°å¡£TRUE:½çÃæµ½ÄÚ´æÊı¾İ£¬FALSE:ÄÚ´æÊı¾İµ½½çÃæ
 int TBDisplayTime( void );                  // ½çÃæÏÔÊ¾µ±Ç°Ê±¼ä
 
+
 int WaveformClr(CHANNEL channel);
 
 int CreatWaveformName(char *fileName)
@@ -216,8 +221,10 @@ void WaveformInit(void)
 	WaveformClr(CHANNEL_V);		// µçÑ¹Í¨µÀ
 	WaveformClr(CHANNEL_VREF);  // ²Î¿¼Í¨µÀ
 	WaveformClr(CHANNEL_FORCE); // Á¦Í¨µÀ
-	//g_Waveform.IIncrement = 0.02;     // 1/50Hz= 0.02s
-	g_Waveform.IIncrement = 0.10;     // 250/2500
+
+	g_Waveform.rawDataLen = 0;  // ²âÁ¿Êı¾İµÄ³¤¶È¹éÁã¡£
+	g_ConvertedLen = 0;         // rawDataÒÑ¾­×ª»»¹ıµÄ³¤¶È
+	g_Waveform.IIncrement = 0.02;     // 1/50Hz= 0.02s
 	g_Waveform.VIncrement = 0.02;
 	g_Waveform.VRefIncrement = 1.0/SAMPLE_RATE;
 	g_Waveform.forceIncrement= 1.0/100;  // Ã¿Ãë100´ÎÎªÁ¦´«¸ĞÆ÷±ä»¯µÄÆµÂÊÉÏÏŞ
@@ -258,10 +265,12 @@ static int WaveformChannel2Addr(CHANNEL channel,ChannelDataPoint* pData)
 			pData->lastLen = &g_Waveform.forceLastLen;
 			pData->increment = &g_Waveform.forceIncrement;
 			break;
+#if 0			
 		default:
 			ret = -1;
 			ERR1("Channel2Addr ²ÎÊı´íÎó¡£channel:%d",channel);
 			goto Error;
+#endif			
 			//break;
 	}
 Error:
@@ -343,10 +352,12 @@ int WaveformGet(CHANNEL channel,CHANNEL_TYPE channelType,double **data,int* len,
 				xStart = 0;
 			}
 			break;
+#if 0			
 		default:
 			ERR1("WaveformGet ²ÎÊı´íÎó£¬channelType£º%d",channelType);
 			goto Error;
 			break;
+#endif			
 	}
 	//*x = (*chData.lastAddr - chData.addr)*(*chData.increment);
 	if(increment!=NULL)
@@ -441,7 +452,10 @@ int main (int argc, char *argv[])
 	RunGUI(task);
 
 Error:
-	DAQmxClearTask(task);
+	if(DAQmxError!=0){
+		MessagePopup("´íÎó","Î´Á¬½ÓÓ²¼ş£¬³ÌĞò½«ÍË³ö¡£");
+	}
+	DAQmxClearTask(task);		
 	return 0;
 }
 #else
@@ -756,24 +770,24 @@ int CVICALLBACK OnSystem (int panel, int control, int event,
 	return 0;
 }
 
-int RMSWin(double rawData[],ssize_t len,double *val)
+int RMSWin(double sampleData[],ssize_t len,double *val)
 {
 	double rms = 0;
 	double data[len];
 	
-	memcpy(data,rawData,len * sizeof(double));
+	memcpy(data,sampleData,len * sizeof(double));
 	HanWin(data,len);
 	RMS(data,len,&rms);// ÓĞĞ§Öµ
 	*val = rms/sqrt(3.0/8.0);
 	return 0;
 }
 
-int MedianWin(double rawData[],ssize_t len,double *val)
+int MedianWin(double sampleData[],ssize_t len,double *val)
 {
 	double median = 0;
 	double data[len];
 	
-	memcpy(data,rawData,len * sizeof(double));
+	memcpy(data,sampleData,len * sizeof(double));
 	HanWin(data,len);
 	Median(data,len,&median);// ¾ùÖµ
 	*val = 2*median;
@@ -782,29 +796,29 @@ int MedianWin(double rawData[],ssize_t len,double *val)
 
 int MeterDisplay()
 {
-	double *rawData;
+	double *sampleData;
 	double val;
 	
 	// ÏÔÊ¾µçÑ¹(ÓĞĞ§Öµ)£¬µçÁ÷(ÓĞĞ§Öµ)£¬Á¦
 	ssize_t dataLen = g_info.numSampsPerChan;
 	// µçÁ÷	
-	rawData = g_Waveform.rawData[CHANNEL_I];
-	RMSWin(rawData,dataLen,&val);
+	sampleData = g_Waveform.sampleData[CHANNEL_I];
+	RMSWin(sampleData,dataLen,&val);
 	SetCtrlVal(panelMain,MAIN_NUM_I,val);
 	
 	// µçÑ¹
-	rawData = g_Waveform.rawData[CHANNEL_V];
-	RMSWin(rawData,dataLen,&val);// µçÑ¹
+	sampleData = g_Waveform.sampleData[CHANNEL_V];
+	RMSWin(sampleData,dataLen,&val);// µçÑ¹
 	SetCtrlVal(panelMain,MAIN_NUM_V,val);
 
 	// µçÑ¹»ù×¼
-	rawData = g_Waveform.rawData[CHANNEL_VREF];
-	MedianWin(rawData,dataLen,&val);// µçÑ¹»ù×¼µÄ¾ùÖµ¡£(µçÑ¹»ù×¼ÎªÖ±Á÷µçÑ¹£¬¾ùÖµ²âÁ¿¸ü¼Ó×¼È·¡£)
+	sampleData = g_Waveform.sampleData[CHANNEL_VREF];
+	MedianWin(sampleData,dataLen,&val);// µçÑ¹»ù×¼µÄ¾ùÖµ¡£(µçÑ¹»ù×¼ÎªÖ±Á÷µçÑ¹£¬¾ùÖµ²âÁ¿¸ü¼Ó×¼È·¡£)
 	SetCtrlVal(panelMain,MAIN_NUM_VREF,val);
 
 	// Á¦
-	rawData = g_Waveform.rawData[CHANNEL_FORCE];
-	MedianWin(rawData,dataLen,&val);
+	sampleData = g_Waveform.sampleData[CHANNEL_FORCE];
+	MedianWin(sampleData,dataLen,&val);
 	SetCtrlVal(panelMain,MAIN_NUM_FORCE,val);
 
 	return 0;
@@ -825,42 +839,106 @@ double MaxDoubleArray(double *array,int len)
 	return max;
 }
 
-int isAutoStart()
+int isAutoStart(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int len)
 {
 	int ret = 0;
 	double *waveform;
-	double x;
-	int len;
-	double increment;
 
-	WaveformGet(CHANNEL_I,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// µçÁ÷
+	//WaveformGet(CHANNEL_I,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// µçÁ÷
+	waveform = &sampleData[CHANNEL_I][0];
 	if(len!=0)  // ÓĞ²¨ĞÎ
 	{
-		if(MaxDoubleArray(waveform,len) > 1.0 )
+		if(MaxDoubleArray(waveform,len) > 1.0 ) // ²É¼¯¿¨µçÑ¹£¬²»ÊÇ´«¸ĞÆ÷µÄÊäÈëµçÑ¹¡£
 		{
 			ret = 1;
 		}
 		else
 		{
-			WaveformGet(CHANNEL_V,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// µçÑ¹
-			if(len!=0)
+			//WaveformGet(CHANNEL_V,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// µçÑ¹
+			waveform = &sampleData[CHANNEL_V][0];
+			if(MaxDoubleArray(waveform,len) > 1.0 )  // ²É¼¯¿¨µçÑ¹£¬£¬²»ÊÇ´«¸ĞÆ÷µÄÊäÈëµçÑ¹¡£
 			{
-				if(MaxDoubleArray(waveform,len) > 1.0 )
-				{
-					ret = 1;
-				}
+				ret = 1;
 			}
 		}
 	}
 
 	return ret;
 }
-/*
- ¹¦ÄÜ£ºÔ­Ê¼²ÉÑùÊı¾İ×ª»»Îª²âÊÔÊı¾İ¡£ÕæÓĞĞ§Öµ±ä»»¡£
- ÊäÈë£ºrawData
- Êä³ö£ºWaveformSet
-*/
-int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
+///////////////////////////////////////////////////////////////////////////////
+// ¹¦ÄÜ£º²ÉÑùÊı×é×ª»»Îª²âÊÔÊı¾İ£¬²¢·ÅÈë²¨ĞÎÊı×é¡£µçÑ¹µçÁ÷Í¨µÀ°üº¬ÕæÓĞĞ§Öµ±ä»»¡£
+// ÊäÈë£ºsampleData
+// Êä³ö£ºWaveformSet
+///////////////////////////////////////////////////////////////////////////////
+
+ssize_t g_ConvertedLen = 0; // ÒÑ¾­×ª»»¹ıµÄ³¤¶È¡£
+int RawData2Waveform(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME],ssize_t len)
+{
+
+	int sampNumPerCycle = SAMPLE_RATE/50;  		// µçÑ¹¡¢µçÁ÷Ã¿ÖÜÆÚ²ÉÑùµãÊı 2500Hz(²ÉÑùÆµÂÊ)/50Hz(¹¤ÆµÆµÂÊ)  = 50µã
+	int sampNumPerForceCycle = SAMPLE_RATE/100; // ×ª»»Á¦Ã¿ÖÜÆÚ²ÉÑùµãÊı¡£	2500Hz(²ÉÑùÆµÂÊ)/100Hz(Á¦´«¸ĞÆ÷ÏìÓ¦ÆµÂÊ) = 25µã
+
+#if 1	
+	if(len - g_ConvertedLen >= 5*sampNumPerCycle){ // ÖÁÉÙ5¸öÖÜÆÚ²ÅÄÜ×ª»»ÓĞĞ§Öµ
+		ssize_t ToConvertLen = len - g_ConvertedLen-4*sampNumPerCycle;// ½«Òª×ª»»µÄ²ÉÑùµãÊı¡£Ô­Ê¼²¨ĞÎ-ÒÑ¾­×ª»»µÄ³¤¶È-4¸öÖÜÆÚ
+		double *waveformI = alloca(ToConvertLen/sampNumPerCycle*sizeof(double)); // ×ª»»µÄ²ÉÑùµãÊı»»ËãÎªÖÜÆÚÊı¡£Ã¿ÖÜÆÚËã³öÒ»¸öÓĞĞ§Öµ¡£
+		double *waveformV = alloca(ToConvertLen/sampNumPerCycle*sizeof(double));
+		double *waveformVref = NULL;
+		double *waveformFORCE = alloca(ToConvertLen/sampNumPerForceCycle*sizeof(double));// ×ª»»µÄ²ÉÑùµãÊı»»ËãÎªÁ¦Öµ¡£
+		double *waveform[SAMPLE_CHANNEL]={waveformI,waveformV,waveformVref,waveformFORCE};
+		double *data[SAMPLE_CHANNEL];		
+		
+		data[CHANNEL_I] = &rawData[CHANNEL_I][0];// µçÁ÷
+		data[CHANNEL_V] = &rawData[CHANNEL_V][0];// µçÑ¹
+		data[CHANNEL_VREF] = &rawData[CHANNEL_VREF][0];// µçÑ¹»ù×¼
+		data[CHANNEL_FORCE] = &rawData[CHANNEL_FORCE][0];// Á¦
+		int index = g_ConvertedLen;
+		int i=0;
+		for(; index<len-4*sampNumPerCycle; index+=sampNumPerCycle,++i)
+		{
+			RMSWin(data[CHANNEL_I]+index,g_info.numSampsPerChan,&waveform[CHANNEL_I][i]);
+			RMSWin(data[CHANNEL_V]+index,g_info.numSampsPerChan,&waveform[CHANNEL_V][i]);
+			Median(data[CHANNEL_FORCE]+2*i*25,25,&waveform[CHANNEL_FORCE][2*i]);		// ×ª»»Á¦.Ç°25µã¡£Ã¿Ãë100´Î£¬Ã¿´Î2500Hz/100Hz = 25µãÆ½¾ùÖµ
+			Median(data[CHANNEL_FORCE]+(2*i+1)*25,25,&waveform[CHANNEL_FORCE][2*i+1]);	// ×ª»»Á¦.ºó25µã¡£
+		}
+		initialX = g_ConvertedLen/50;
+		initialForce = g_ConvertedLen/25;
+		initialVRef = g_ConvertedLen;
+		WaveformSet(CHANNEL_I,&waveform[CHANNEL_I][0],i,initialX);
+		WaveformSet(CHANNEL_V,&waveform[CHANNEL_V][0],i,initialX);
+		WaveformSet(CHANNEL_VREF,&data[CHANNEL_VREF][0],ToConvertLen,initialVRef);
+		WaveformSet(CHANNEL_FORCE,&waveform[CHANNEL_FORCE][0],2*i,initialForce);
+		g_ConvertedLen = index;
+	}
+#endif
+#if 0
+	// µçÑ¹»ù×¼
+	data[CHANNEL_VREF] = rawData[CHANNEL_VREF];
+	WaveformSet(CHANNEL_VREF,data[CHANNEL_VREF],g_info.numSampsPerChan,initialVRef);
+	initialVRef +=g_info.numSampsPerChan;
+
+	// ×ª»»Á¦
+	
+	data[CHANNEL_FORCE] = rawData[CHANNEL_FORCE];
+	int numMedian = 10;//0.1s/(1/100Hz)
+	for(int i=0; i<numMedian; ++i)
+	{
+		Median(data[CHANNEL_FORCE]+i*25,25,&waveform[CHANNEL_FORCE][i]);//Ã¿´Î25µãÖĞ¼äÖµ
+	}
+	WaveformSet(CHANNEL_FORCE,waveform[CHANNEL_FORCE],numMedian,initialForce);
+	initialForce +=numMedian;
+#endif
+	return 0;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ¹¦ÄÜ£ºµ¥´Î²ÉÑùÊı¾İ×ª»»Îª²âÊÔÊı¾İ£¬²¢·ÅÈë²¨ĞÎÊı×é¡£µçÑ¹µçÁ÷Í¨µÀ°üº¬ÕæÓĞĞ§Öµ±ä»»¡£
+// ÊäÈë£ºsampleData
+// Êä³ö£ºWaveformSet
+///////////////////////////////////////////////////////////////////////////////
+int SampleData2Waveform(int isRuning,double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE])
 {
 
 	int sampNumPerCycle =SAMPLE_RATE/50;  // Ã¿ÖÜÆÚ²ÉÑùµãÊı 2500Hz/50Hz=50µã
@@ -880,14 +958,14 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	// µçÁ÷
 #if 0	
-	data = rawData[CHANNEL_I];
+	data = sampleData[CHANNEL_I];
 	for(int i=0; i<numRMS; ++i)
 	{
 		RMS(data+i*sampNumPerCycle,sampNumPerCycle,&waveform[i]);
 	}
 	WaveformSet(CHANNEL_I,waveform,numRMS,initialX);
 #else
-	data = g_Waveform.rawData[CHANNEL_I];
+	data = g_Waveform.sampleData[CHANNEL_I];
 	RMSWin(data,g_info.numSampsPerChan,&waveform[0]);
 	WaveformSet(CHANNEL_I,waveform,1,initialX/5.0);
 #endif
@@ -895,7 +973,7 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	// µçÑ¹
 #if 1	
-	data = rawData[CHANNEL_V];
+	data = sampleData[CHANNEL_V];
 	for(int i=0; i<numRMS; ++i)
 	{
 		RMS(data+i*sampNumPerCycle,sampNumPerCycle,&waveform[i]);
@@ -904,19 +982,19 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 	WaveformSet(CHANNEL_V,waveform,numRMS,initialX);
 	initialX +=  numRMS;
 #else
-	data = rawData[CHANNEL_V]; 
+	data = sampleData[CHANNEL_V]; 
 	RMSWin(data,g_info.numSampsPerChan,&waveform[0]);
 	WaveformSet(CHANNEL_V,waveform,1,initialX/5.0);	
 #endif
 
 
 	// µçÑ¹»ù×¼
-	data = rawData[CHANNEL_VREF];
+	data = sampleData[CHANNEL_VREF];
 	WaveformSet(CHANNEL_VREF,data,g_info.numSampsPerChan,initialVRef);
 	initialVRef +=g_info.numSampsPerChan;
 
 	// ×ª»»Á¦
-	data = rawData[CHANNEL_FORCE];
+	data = sampleData[CHANNEL_FORCE];
 	int numMedian = 10;//0.1s/(1/100Hz)
 	for(int i=0; i<numMedian; ++i)
 	{
@@ -927,13 +1005,22 @@ int RawData2Waveform(int isRuning,double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * S
 
 	return 0;
 }
-
+int SampleData2RawData(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int len)
+{
+	double *dataStart;
+	for(int i=0;i<SAMPLE_CHANNEL;i++){
+		dataStart = &g_Waveform.rawData[i][g_Waveform.rawDataLen];
+		memcpy(dataStart,sampleData[i],len*sizeof(double));
+	}
+	g_Waveform.rawDataLen += len;
+	return 0;
+}
 
 #if defined(PORTABLE) 
 #if defined(SIMULATE_INPUT) // Èí¼şÄ£ÄâÊäÈëÊı¾İ
 #define SIMULATE_FREQUENCY 20.0/2500 // ¹éÒ»»¯ÆµÂÊ¡£²¨ĞÎÆµÂÊ/²ÉÑùÆµÂÊ¡£50Hz/2500Hz
 #define SIMULATE_PHASE 2.0  // ³õÊ¼ÏàÎ»¡£µ¥Î»¡ã¡£360ÎªÒ»ÖÜ¡£
-int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
+int ReadMeasure(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int *length)
 {
 	int32 DAQmxError = DAQmxSuccess; 	
 	float64 *data = NULL;
@@ -962,16 +1049,20 @@ int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
 
 	for(channel=0; channel<numChannels; channel++)
 	{
-		memcpy(rawData[channel],data+len*channel,len*sizeof(double));
+		memcpy(sampleData[channel],data+len*channel,len*sizeof(double));
 	}
 
+	*length = len;
 Error:
 	if (data)
 		free (data);
 	return 0;
 }
 #else   // Ê¹ÓÃÓ²¼ş²É¼¯¿¨
-int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
+
+
+
+int ReadMeasure(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int *length)
 {
 	int32 DAQmxError = DAQmxSuccess;
 	float64 *data = NULL;
@@ -994,14 +1085,16 @@ int ReadMeasure(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME])
 #if 0
 	for(int channel=0; channel<numChannels; channel++)
 	{
-		memcpy(g_Waveform.rawData[channel],data,g_info.numSampsPerChan*sizeof(double));
+		memcpy(g_Waveform.sampleData[channel],data,g_info.numSampsPerChan*sizeof(double));
 	}
 #else
 	int len = g_info.numSampsPerChan;
 	for(int channel=0; channel<numChannels; channel++)
 	{
-		memcpy(rawData[channel],data+len*channel,len*sizeof(double));
+		memcpy(sampleData[channel],data+len*channel,len*sizeof(double));
 	}
+	*length = len;
+	
 #endif
 
 Error:
@@ -1187,12 +1280,16 @@ int MeasureDisplayAndAutoStart()
 	{
 		if(g_info.workModel == WORK_MODEL_AUTO)
 		{
-			ReadMeasure(g_Waveform.rawData);
-			RawData2Waveform(FALSE,g_Waveform.rawData);
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			//SampleData2Waveform(FALSE,g_Waveform.sampleData);
 			MeterDisplay();  // ÔÚÒÇ±íÃæ°åÏÔÊ¾²âÁ¿Öµ
-			if(isAutoStart())
+			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
 			{
 				Measure(TRUE);
+#if 1				
+				SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+				//RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
+#endif				
 			}
 			else
 			{
@@ -1209,8 +1306,13 @@ int MeasureDisplayAndAutoStart()
 		g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
 		for(int i=0; i<n; i++)
 		{
-			ReadMeasure(g_Waveform.rawData);
-			RawData2Waveform(TRUE,g_Waveform.rawData);
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+#if 0			
+			SampleData2Waveform(TRUE,g_Waveform.sampleData);
+#else			
+			RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
+#endif			
 			MeterDisplay();
 			//ReadMeasureAndToWaveform();
 			PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);
