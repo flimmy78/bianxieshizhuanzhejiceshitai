@@ -20,7 +20,6 @@
 #include "toolbox.h"
 #include "log.h"
 
-//#define PORTABLE
 #if defined(PORTABLE) 
 	#include <NIDAQmx.h> 
 #else
@@ -29,7 +28,7 @@
 	typedef double             float64;
 #endif
 
-#define SIMULATE_INPUT  //  软件模拟输入数据，注释掉本行则使用采集卡
+//#define SIMULATE_INPUT  //  软件模拟输入数据，注释掉本行则使用采集卡
 
 //==============================================================================
 // Constants
@@ -45,7 +44,7 @@ typedef enum
 typedef enum
 {
 	RUN_MODEL_STOP,
-	RUN_MODEL_RUNING,
+	RUN_MODEL_RUNNING,
 	RUN_MODEL_QUIT,
 } RUN_MODEL;
 
@@ -201,7 +200,7 @@ int EnableCursor(int panel, int control) ; 	   // 显示/隐藏光标
 void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl);  // 电流:红色，电压：绿色，电压基准：蓝色，转换力：白色
 int UpdateUserData(int panel,BOOL isSave);	// panel：需要更新的面板。TRUE:界面到内存数据，FALSE:内存数据到界面
 int TBDisplayTime( void );                  // 界面显示当前时间
-
+int LoadALLData();
 
 int WaveformClr(CHANNEL channel);
 
@@ -288,7 +287,8 @@ int WaveformClr(CHANNEL channel)
 	}
 	*chData.len = 0;
 	*chData.increment = 0;
-
+	*chData.lastAddr = 0;
+	*chData.lastLen = 0;	
 Error:
 	return ret;
 }
@@ -367,7 +367,298 @@ int WaveformGet(CHANNEL channel,CHANNEL_TYPE channelType,double **data,int* len,
 Error:
 	return ret;
 }
+/////////////////////////////////////////////////////////
+// UI用户界面
+#if 0  // 以最大最小值重设坐标轴
+int UpdatePlot()
+{
+	// 重绘制，依照采集到的最大值重设纵坐标轴。
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0);
+	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE);
+	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS,VAL_AUTOSCALE,0,0);
+	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,VAL_AUTOSCALE,0,0);
 
+	PlotData(CHANNEL_TYPE_ALL_DATA,g_info.chartPanel, g_info.chartCtrl);
+
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1);
+	return 0;
+}
+#else // 以最大值重设坐标轴
+#if 0
+int SetWaveformAxies(CHANNEL channel,int axis)
+{
+	double* waveform;
+	double max,min,maxABS;
+	int len,imax,imin;	
+	WaveformGet(channel,CHANNEL_TYPE_ALL_DATA,&waveform,&len,NULL,NULL);	// 力波形
+	if(len>0){
+		MaxMin1D(waveform,len,&max,&imax,&min,&imin);
+		max = fabs(max);
+		min = fabs(min);
+		maxABS = max>min?max:min; // 取绝对值的最大值。
+		maxABS = (int)maxABS +1;
+
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,axis,VAL_MANUAL,-maxABS,maxABS);
+	}
+	return 0;
+}
+#else
+int GetWavefromAxiesMax(CHANNEL channel,int *axiesMax)
+{
+	int isErr = 0;
+	double* waveform;
+	double max,min,maxABS;
+	int len,imax,imin;	
+	WaveformGet(channel,CHANNEL_TYPE_ALL_DATA,&waveform,&len,NULL,NULL);	// 力波形
+	if(len>0){
+		MaxMin1D(waveform,len,&max,&imax,&min,&imin);
+		max = fabs(max);
+		min = fabs(min);
+		maxABS = max>min?max:min; // 取绝对值的最大值。
+		maxABS = (int)maxABS +1;
+		*axiesMax = maxABS;
+	}else{
+		isErr = -1;
+	}
+
+	return isErr;
+}
+
+int CalculateWaveformAxies(CHANNEL channel1,CHANNEL channel2,double *Ch1AxiesMax,double *Ch2AxiesMax)
+{
+	int errno1 = 0;
+	int axies[2];
+	//int max,min;
+	if((errno1 = GetWavefromAxiesMax(channel1,&axies[0]))!= 0)goto Error;
+	if((errno1 = GetWavefromAxiesMax(channel2,&axies[1]))!= 0)goto Error;
+#if 1
+	double val;
+	if(axies[0] > axies[1]){
+		for(;;axies[1] ++)
+		{
+			val = axies[0]/axies[1];
+			if(val == 1 || val == 2 || val == 5)
+				break;
+		}// 整倍数缩放
+	}else{
+		for(;;axies[0] ++)
+		{
+			val = axies[1]/axies[0];
+			if(val == 1 || val == 2 || val == 5)
+				break;
+		}// 整倍数缩放
+	}
+#endif	
+	
+	*Ch1AxiesMax = axies[0];
+	*Ch2AxiesMax = axies[1];
+Error:
+	return errno1;
+}
+
+void SetWaveformAxies()
+{
+	double Ch1AxiesMax,Ch2AxiesMax;
+	if(CalculateWaveformAxies(CHANNEL_FORCE,CHANNEL_I,&Ch1AxiesMax,&Ch2AxiesMax)==0)
+	{
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS,VAL_MANUAL,-Ch1AxiesMax,Ch1AxiesMax);
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,VAL_MANUAL,-Ch2AxiesMax,Ch2AxiesMax);
+	}
+}
+#endif
+
+int UpdatePlot()
+{
+	// 重绘制，依照采集到的最大值重设纵坐标轴。
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0); // 更新坐标轴参数期间，禁止画面更新
+	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE); // 打开抗锯齿
+
+	//SetWaveformAxies(CHANNEL_FORCE,VAL_LEFT_YAXIS);
+	//SetWaveformAxies(CHANNEL_I,VAL_RIGHT_YAXIS);
+	SetWaveformAxies();
+
+	PlotData(CHANNEL_TYPE_ALL_DATA,g_info.chartPanel, g_info.chartCtrl);
+
+	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
+	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1); // 更新画面
+	return 0;
+}
+#endif
+
+int SetUIChange(int isStart)
+{
+	if(isStart)   // 开始采集
+	{
+		// Example Core: Start the task.
+		//DAQmxErrChk(DAQmxStartTask(g_info.task));
+		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 1);
+		DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW);
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS, g_info.scalingMode[0],g_info.min[0],g_info.max[0]);
+		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,g_info.scalingMode[1],g_info.min[1],g_info.max[1]);
+		
+		SetCtrlVal(panelMain,MAIN_LED_RUNING,TRUE);
+		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"停止采集");
+		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,FALSE);
+		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,FALSE);
+		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,FALSE);
+		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,FALSE);
+		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,FALSE);
+		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,FALSE);
+
+
+		//SetCtrlAttribute(panel,control,ATTR_PICT_BGCOLOR,0x185776);
+		WaveformInit();
+		UpdateUserData(panelMeasure,TRUE);
+
+	}
+	else  // 停止采集
+	{
+
+		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 0);
+		SetCtrlVal(panelMain,MAIN_LED_RUNING,FALSE);
+		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"开始采集");
+		// 关闭面板，停止保存
+		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,TRUE);
+		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,TRUE);
+		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,TRUE);
+		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,TRUE);
+		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
+		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
+
+		UpdatePlot(); // 重绘制，依照采集到的最大值重设纵坐标轴。
+		// 更新转辙机参数面板
+		UpdateUserData(panelMeasure,FALSE);
+	}
+	return 0;
+}
+/////////////////////////////////////////////////////////
+// 状态机
+typedef enum{
+	FSM_STATE_IDEL,
+	FSM_STATE_MEASURE,
+	FSM_STATE_AUTO_MEASURE,
+	FSM_STATE_QUIT
+}FSM_STATE;
+
+// 信号
+typedef enum{
+	FSM_SIG_UI_MEASURE,// 用户点击采集按钮	
+	FSM_SIG_AUTO_MEASURE,
+	FSM_SIG_START_MEASURE,
+	FSM_SIG_STOP_MEASURE,
+	FSM_SIG_SAVE,
+	FSM_SIG_LOAD,
+	FSM_SIG_PRINT,
+	FSM_SIG_QUIT,
+	FSM_SIG_LEN
+}FSM_SIG_ID;
+
+typedef struct{
+	FSM_SIG_ID id;
+	char describe[50];
+}FSM_SIG;
+
+typedef struct{
+	FSM_STATE	state;
+}FSM_ID;
+
+
+FSM_ID g_fsmID;
+FSM_SIG g_fsmSig[] = {
+	{FSM_SIG_UI_MEASURE,"用户点击采集按钮"},
+	{FSM_SIG_AUTO_MEASURE,	"自动测量"},
+	{FSM_SIG_START_MEASURE, "开始测量"},
+	{FSM_SIG_STOP_MEASURE,	"停止测量"},
+	{FSM_SIG_SAVE,			"保存"},
+	{FSM_SIG_LOAD,			"读取"},
+	{FSM_SIG_PRINT,			"打印"},
+	{FSM_SIG_QUIT,			"退出"},
+};
+#define SetState(newState) fsmId->state = newState;
+
+// SendFSMSig(g_fsmID,FSM_SIG_AUTO_MEASURE);
+int GetFSMState(FSM_ID *fsmId,FSM_ID *fsm)
+{
+	*fsm = *fsmId;
+	return 0;
+}
+
+
+void OnFSMStateQuitInFun()
+{
+	Measure(FALSE); // 停止采集
+	QuitUserInterface (0);
+}
+
+void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
+{
+	//FSM_ID fsm;
+	//GetFSMState(fsmId,&fsm);
+	switch(fsmId->state){
+		case FSM_STATE_IDEL:
+			if(sig->id == FSM_SIG_UI_MEASURE){
+				DisplayPanel(panelMeasure);	//用户界面切换到采集设置面板
+			}else if(sig->id == FSM_SIG_AUTO_MEASURE){  		// 自动测量
+				SetUIChange(1);
+				SetCtrlAttribute(panelMain,MAIN_TIMER_MEASURE,ATTR_ENABLED,TRUE);
+				SetState(FSM_STATE_AUTO_MEASURE);				
+			}else if(sig->id == FSM_SIG_START_MEASURE){ // 手动测量
+				SetUIChange(1);
+				Measure(TRUE);
+				SetState(FSM_STATE_MEASURE);				
+			}else if(sig->id == FSM_SIG_SAVE){  		// 保存
+				UpdateUserData(panelUserData,FALSE);
+				DisplayPanel(panelUserData);				// 显示保存面板
+			}else if(sig->id == FSM_SIG_LOAD){  		// 查询
+				LoadALLData();
+			}else if(sig->id == FSM_SIG_PRINT){  		// 
+			}else if(sig->id == FSM_SIG_QUIT){  		// 退出
+				OnFSMStateQuitInFun();				
+				SetState(FSM_STATE_QUIT);
+			}			
+			break;
+		case FSM_STATE_MEASURE:	// 测量中		
+			if(sig->id == FSM_SIG_UI_MEASURE){			// 用户停止测量
+				Measure(FALSE);				
+				SetUIChange(0);	
+				SetState(FSM_STATE_IDEL);
+			}else if(sig->id == FSM_SIG_STOP_MEASURE){	// 测试时间到，停止
+				Measure(FALSE);
+				SetUIChange(0);					
+				SetState(FSM_STATE_IDEL);
+			}else if(sig->id == FSM_SIG_QUIT){			// 退出程序
+				OnFSMStateQuitInFun();
+				SetState(FSM_STATE_QUIT);				
+			}
+			break;			
+		case FSM_STATE_AUTO_MEASURE:  // 自动测量
+			if(sig->id == FSM_SIG_UI_MEASURE){
+				SetUIChange(0);
+				SetState(FSM_STATE_IDEL);				
+			}else if(sig->id == FSM_SIG_START_MEASURE){
+				Measure(TRUE);
+				SetState(FSM_STATE_MEASURE);				
+			}else if(sig->id == FSM_SIG_QUIT){
+				OnFSMStateQuitInFun();				
+				SetState(FSM_STATE_QUIT);				
+			}			
+			break;			
+		case FSM_STATE_QUIT:			
+			// OnFSMStateQuitOutFun();
+			break;
+	}
+}
+
+int SendFSMSig(FSM_ID *fsmId,FSM_SIG_ID sigId)
+{   
+	FSM_SIG *sig = &g_fsmSig[sigId];
+
+	OnFSMSig(fsmId,sig);
+	return 0;
+}
 int  ChartInit(TaskHandle task)
 {
 	int error = 0;
@@ -484,7 +775,8 @@ int CVICALLBACK OnExitPrograme (int panel, int control, int event,
 		case EVENT_LEFT_CLICK:
 		case EVENT_LEFT_DOUBLE_CLICK:
 #if defined(PORTABLE) 			
-			g_info.running = RUN_MODEL_QUIT;
+			//g_info.running = RUN_MODEL_QUIT;
+			SendFSMSig(&g_fsmID,FSM_SIG_QUIT);
 #else
 			QuitUserInterface (0);			
 #endif
@@ -501,7 +793,8 @@ int CVICALLBACK OnStartMeasure (int panel, int control, int event,
 {
 	if (event == EVENT_LEFT_CLICK)
 	{
-		if(g_info.running == RUN_MODEL_RUNING)  // 当前正在采集，下面停止采集数据。
+#if 0		
+		if(g_info.running == RUN_MODEL_RUNNING)  // 当前正在采集，下面停止采集数据。
 		{
 			Measure(FALSE); // 停止采集
 		}
@@ -509,116 +802,37 @@ int CVICALLBACK OnStartMeasure (int panel, int control, int event,
 		{
 			DisplayPanel(panelMeasure);//切换到采集设置面板
 		}
-	}
-	return 0;
-}
-#if 0  // 以最大最小值重设坐标轴
-int UpdatePlot()
-{
-	// 重绘制，依照采集到的最大值重设纵坐标轴。
-	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0);
-	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
-	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE);
-	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS,VAL_AUTOSCALE,0,0);
-	SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,VAL_AUTOSCALE,0,0);
-
-	PlotData(CHANNEL_TYPE_ALL_DATA,g_info.chartPanel, g_info.chartCtrl);
-
-	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
-	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1);
-	return 0;
-}
-#else // 以最大值重设坐标轴
-int SetWaveformAxies(CHANNEL channel,int axis)
-{
-	double* waveform;
-	double max,min,maxABS;
-	int len,imax,imin;	
-	WaveformGet(channel,CHANNEL_TYPE_ALL_DATA,&waveform,&len,NULL,NULL);	// 力波形
-	if(len>0){
-		MaxMin1D(waveform,len,&max,&imax,&min,&imin);
-		max = fabs(max);
-		min = fabs(min);
-		maxABS = max>min?max:min; // 取绝对值的最大值。
-		maxABS = (int)maxABS +1;
-
-		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,axis,VAL_MANUAL,-maxABS,maxABS);
+#else
+	SendFSMSig(&g_fsmID,FSM_SIG_UI_MEASURE);
+#endif		
 	}
 	return 0;
 }
 
-int UpdatePlot()
-{
-	// 重绘制，依照采集到的最大值重设纵坐标轴。
-	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,0); // 更新坐标轴参数期间，禁止画面更新
-	DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW); // 清空绘图区
-	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,TRUE); // 打开抗锯齿
-
-	SetWaveformAxies(CHANNEL_FORCE,VAL_LEFT_YAXIS);
-	SetWaveformAxies(CHANNEL_I,VAL_RIGHT_YAXIS);
-
-	PlotData(CHANNEL_TYPE_ALL_DATA,g_info.chartPanel, g_info.chartCtrl);
-
-	//SetCtrlAttribute(g_info.chartPanel,g_info.chartCtrl,ATTR_ENABLE_ANTI_ALIASING,FALSE);
-	SetCtrlAttribute(g_info.chartPanel, g_info.chartCtrl,ATTR_REFRESH_GRAPH,1); // 更新画面
-	return 0;
-}
-#endif
 
 #if defined(PORTABLE)
+
 // 开始测量
 void Measure(int isStart)
 {
 	int DAQmxError = 0;
 	if(isStart)   // 开始采集
 	{
-		// Example Core: Start the task.
-		//DAQmxErrChk(DAQmxStartTask(g_info.task));
-		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 1);
-		DeleteGraphPlot(panelGraph,GRAPH_GRAPH,-1,VAL_DELAYED_DRAW);
-
-		SetCtrlVal(panelMain,MAIN_LED_RUNING,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"停止采集");
-		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,FALSE);
-		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,FALSE);
-		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,FALSE);
-
-		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_LEFT_YAXIS, g_info.scalingMode[0],g_info.min[0],g_info.max[0]);
-		SetAxisScalingMode(g_info.chartPanel,g_info.chartCtrl,VAL_RIGHT_YAXIS,g_info.scalingMode[1],g_info.min[1],g_info.max[1]);
-		//SetCtrlAttribute(panel,control,ATTR_PICT_BGCOLOR,0x185776);
-		g_info.running = RUN_MODEL_RUNING;
+		//g_info.running = RUN_MODEL_RUNNING;
+		DAQmxErrChk(DAQmxStopTask(g_info.task));
+		DAQmxErrChk(DAQmxStartTask(g_info.task));
 		g_info.startTick = GetTickCount();
-		WaveformInit();
-		UpdateUserData(panelMeasure,TRUE);
-
+		// 启动定时器。用于显示/采集。
+		SetCtrlAttribute(panelMain,MAIN_TIMER_MEASURE,ATTR_ENABLED,TRUE);
 	}
 	else  // 停止采集
 	{
-		g_info.running = RUN_MODEL_STOP;
-		g_info.workModel = WORK_MODEL_MANUAL;
+		//g_info.running = RUN_MODEL_STOP;
+		//g_info.workModel = WORK_MODEL_MANUAL;
 		g_info.processedTick = 0;
 		DAQmxErrChk(DAQmxStopTask(g_info.task));
-
-		//SetCtrlAttribute (panelMain, g_info.timerCtrl, ATTR_ENABLED, 0);
-		SetCtrlVal(panelMain,MAIN_LED_RUNING,FALSE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_MEASURE,ATTR_LABEL_TEXT ,"开始采集");
-		// 关闭面板，停止保存
-		SetCtrlAttribute(panelMain,MAIN_PIC_SAVE,   ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_LED_SAVE,   ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_PIC_OPEN,   ATTR_VISIBLE,TRUE);
-		SetCtrlAttribute(panelMain,MAIN_LED_OPEN,   ATTR_VISIBLE,TRUE);
-		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
-		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
-
-		UpdatePlot(); // 重绘制，依照采集到的最大值重设纵坐标轴。
-		// 更新转辙机参数面板
-		UpdateUserData(panelMeasure,FALSE);
-
-		//OnStartMeasure(panelMain,MAIN_PIC_MEASURE,EVENT_LEFT_CLICK,NULL,0,0);
-
+		// 停止定时器(用于显示/采集)
+		SetCtrlAttribute(panelMain,MAIN_TIMER_MEASURE,ATTR_ENABLED,FALSE);		
 	}
 Error:
 	DAQmxReportErr(DAQmxError);
@@ -737,13 +951,14 @@ int CVICALLBACK OnMeasureStart (int panel, int control, int event,
 		// 转辙机用户数据
 		if(control == MEASURE_PIC_AUTO_MEASURE)  // 自动测量
 		{
-			g_info.workModel = WORK_MODEL_AUTO;
+			//g_info.workModel = WORK_MODEL_AUTO;
+			SendFSMSig(&g_fsmID,FSM_SIG_AUTO_MEASURE);
 		}
 		else    // 手动测量
 		{
-			Measure(TRUE);
+			//Measure(TRUE);
+			SendFSMSig(&g_fsmID,FSM_SIG_START_MEASURE);
 		}
-
 		HidePanel(panel);
 	}
 
@@ -881,10 +1096,11 @@ int RawData2Waveform(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIM
 #if 1	
 	if(len - g_ConvertedLen >= 5*sampNumPerCycle){ // 至少5个周期才能转换有效值
 		ssize_t ToConvertLen = len - g_ConvertedLen-4*sampNumPerCycle;// 将要转换的采样点数。原始波形-已经转换的长度-4个周期
-		double *waveformI = alloca(ToConvertLen/sampNumPerCycle*sizeof(double)); // 转换的采样点数换算为周期数。每周期算出一个有效值。
-		double *waveformV = alloca(ToConvertLen/sampNumPerCycle*sizeof(double));
+		double waveformI [ToConvertLen/sampNumPerCycle]; // 转换的采样点数换算为周期数。每周期算出一个有效值。
+		double waveformV [ToConvertLen/sampNumPerCycle];
 		double *waveformVref = NULL;
-		double *waveformFORCE = alloca(ToConvertLen/sampNumPerForceCycle*sizeof(double));// 转换的采样点数换算为力值。
+		
+		double waveformFORCE [ToConvertLen/sampNumPerForceCycle];// 转换的采样点数换算为力值。
 		double *waveform[SAMPLE_CHANNEL]={waveformI,waveformV,waveformVref,waveformFORCE};
 		double *data[SAMPLE_CHANNEL];		
 		
@@ -1251,6 +1467,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 		SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
 	}
 #endif
+	
 #if 0
 	WaveformGet(CHANNEL_VREF,chanType,&waveform,&len,&x,&increment);// 绘制电压基准波形图
 	if(len)
@@ -1260,7 +1477,6 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 		SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
 	}
 #endif
-
 
 	WaveformGet(CHANNEL_FORCE,chanType,&waveform,&len,&x,&increment);// 绘制转换力波形图
 	if(len)
@@ -1274,6 +1490,8 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 }
 
 #if defined(PORTABLE)
+#define MDAASVer 2
+#if MDAASVer == 0
 int MeasureDisplayAndAutoStart()
 {
 	if(g_info.running == RUN_MODEL_STOP) // 没有在测量，只显示当前值，不绘制曲线
@@ -1286,37 +1504,31 @@ int MeasureDisplayAndAutoStart()
 			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
 			{
 				Measure(TRUE);
-#if 1				
 				SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
-				//RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
-#endif				
 			}
 			else
 			{
 			}
 		}
 	}
-	else if(g_info.running == RUN_MODEL_RUNING)     // 正在测量
+	else if(g_info.running == RUN_MODEL_RUNNING)     // 正在测量
 	{
+	
 		int maxTime_ms = 15.1*1000;	   // 只测量15秒内的数据
 		int curTick = GetTickCount();
 		if(curTick > g_info.startTick + maxTime_ms)
 			curTick = g_info.startTick + maxTime_ms;
 		int n = (curTick - g_info.startTick - g_info.processedTick)/100;
 		g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
+
 		for(int i=0; i<n; i++)
 		{
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
-#if 0			
-			SampleData2Waveform(TRUE,g_Waveform.sampleData);
-#else			
-			RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
-#endif			
-			MeterDisplay();
-			//ReadMeasureAndToWaveform();
-			PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);
 		}
+		RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
+		MeterDisplay();
+		PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);		
 		if(g_info.processedTick >= maxTime_ms) // 只测量maxTime 毫秒内的数据
 		{
 			Measure(FALSE); // 停止采集
@@ -1332,7 +1544,130 @@ int MeasureDisplayAndAutoStart()
 	}
 	return 0;
 }
+#elif MDAASVer == 1
+// 经过的时间折合采样/显示次数。
+int ElapseTimeToRunN(double maxTime,int *n)
+{
+	int maxTime_ms = 15.1*1000;	   // 只测量15秒内的数据
+	int curTick = GetTickCount();
+	if(curTick > g_info.startTick + maxTime_ms)
+		curTick = g_info.startTick + maxTime_ms;
+	g_info.processedTick = ((curTick - g_info.startTick)/100)*100;		
+	*n = (curTick - g_info.startTick - g_info.processedTick)/100;
+	return 0;
+}
+
+int MeasureDisplayAndAutoStart()
+{
+	if(g_info.running == RUN_MODEL_STOP) // 没有在测量，只显示当前值，不绘制曲线
+	{
+		if(g_info.workModel == WORK_MODEL_AUTO)
+		{
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			//SampleData2Waveform(FALSE,g_Waveform.sampleData);
+			MeterDisplay();  // 在仪表面板显示测量值
+			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+			{
+				Measure(TRUE);
+				SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+			}
+			else
+			{
+			}
+		}
+	}
+	else if(g_info.running == RUN_MODEL_RUNNING)     // 正在测量
+	{
+#if 1	
+		int maxTime_ms = 15.1*1000;	   // 只测量15秒内的数据
+		int curTick = GetTickCount();
+		if(curTick > g_info.startTick + maxTime_ms)
+			curTick = g_info.startTick + maxTime_ms;
+		int n = (curTick - g_info.startTick - g_info.processedTick)/100;
+		g_info.processedTick = ((curTick - g_info.startTick)/100)*100;
+#else
+		int n;
+		ElapseTimeToRunN(15.1,&n);
+#endif
+		for(int i=0; i<n; i++)
+		{
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+		}
+		RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
+		MeterDisplay();
+		PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);		
+		if(g_info.processedTick >= maxTime_ms) // 只测量maxTime 毫秒内的数据
+		{
+			Measure(FALSE); // 停止采集
+		}
+		else
+		{
+		}
+	}
+	else if(g_info.running == RUN_MODEL_QUIT)    //quit
+	{
+		Measure(FALSE); // 停止采集
+		QuitUserInterface (0);
+	}
+	return 0;
+}
+#elif MDAASVer == 2
+// 经过的时间折合采样/显示次数。
+int ElapseTimeToRunN(double maxTime_s,int *n)
+{
+	int maxTime_ms = maxTime_s*1000;	   // 秒转换为毫秒。只测量maxTime_s秒内的数据
+	int curTick = GetTickCount();
+	if(curTick > g_info.startTick + maxTime_ms)
+		curTick = g_info.startTick + maxTime_ms;
+	*n = (curTick - g_info.startTick - g_info.processedTick)/100;
+	g_info.processedTick = ((curTick - g_info.startTick)/100)*100;		
+	return 0;
+}
+int MeasureDisplayAndAutoStart()
+{
+	FSM_ID fsm;
+	GetFSMState(&g_fsmID,&fsm);	
+	switch(fsm.state){
+		case FSM_STATE_MEASURE:	// 测量中		
+			double maxTime_s = 15.1;	   // 只测量15秒内的数据
+			int n;
+			ElapseTimeToRunN(maxTime_s,&n);
+			if(n>0){ 
+				for(int i=0; i<n; i++)
+				{
+					ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+					SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+				}
+				MeterDisplay();				
+				RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);
+				PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);		
+			}
+			if(g_info.processedTick >= maxTime_s*1000) // 只测量maxTime 秒内的数据
+			{
+				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE); // 停止采集  
+			}			
+			break;			
+		case FSM_STATE_AUTO_MEASURE:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			MeterDisplay();  // 在仪表面板显示测量值
+			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+			{
+				//Measure(TRUE);
+				SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+				SendFSMSig(&g_fsmID,FSM_SIG_START_MEASURE);
+			}
+			break;			
+		default :
+			break;
+	}	
+	return 0;
+}
+#endif
 #endif 
+
+
+
 int CVICALLBACK OnTimer_Measure (int panel, int control, int event,
 								 void *callbackData, int eventData1, int eventData2)
 {
@@ -1629,8 +1964,9 @@ int CVICALLBACK OnSaveData (int panel, int control, int event,
 {
 	if(event == EVENT_LEFT_CLICK)
 	{
-		UpdateUserData(panelUserData,FALSE);
-		DisplayPanel(panelUserData);
+		SendFSMSig(&g_fsmID,FSM_SIG_SAVE);
+		//UpdateUserData(panelUserData,FALSE);
+		//DisplayPanel(panelUserData);
 	}
 	return 0;
 }
@@ -1661,13 +1997,13 @@ int LoadALLData()
 	}
 	return 0;
 }
-
 int CVICALLBACK OnOpenData (int panel, int control, int event,
 							void *callbackData, int eventData1, int eventData2)
 {
 	if(event == EVENT_LEFT_CLICK)
 	{
-		LoadALLData();
+		//LoadALLData();
+		SendFSMSig(&g_fsmID,FSM_SIG_LOAD);
 	}
 	return 0;
 }

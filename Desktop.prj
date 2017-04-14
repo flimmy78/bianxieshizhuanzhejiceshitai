@@ -22,16 +22,28 @@ Don't Display Deploy InstrDrv Dialog = False
 Include Files Folder Not Added Yet = True
 Instrument Files Folder Not Added Yet = True
 Library Files Folder Not Added Yet = True
-Folder 0 = "Source Files"
-FolderEx 0 = "Source Files"
-Folder 1 = "User Interface Files"
-FolderEx 1 = "User Interface Files"
+Folder 0 = "User Interface Files"
+FolderEx 0 = "User Interface Files"
+Folder 1 = "Source Files"
+FolderEx 1 = "Source Files"
 Folder 2 = "其他"
 FolderEx 2 = "其他"
 
 [File 0001]
-File Type = "CSource"
+File Type = "User Interface Resource"
 Res Id = 1
+Path Is Rel = True
+Path Rel To = "Project"
+Path Rel Path = "Portable.uir"
+Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
+Exclude = False
+Project Flags = 0
+Folder = "User Interface Files"
+Folder Id = 0
+
+[File 0002]
+File Type = "CSource"
+Res Id = 2
 Path Is Rel = True
 Path Rel To = "Project"
 Path Rel Path = "desktop.c"
@@ -40,11 +52,11 @@ Exclude = True
 Compile Into Object File = False
 Project Flags = 0
 Folder = "Source Files"
-Folder Id = 0
+Folder Id = 1
 
-[File 0002]
+[File 0003]
 File Type = "CSource"
-Res Id = 2
+Res Id = 3
 Path Is Rel = True
 Path Rel To = "Project"
 Path Rel Path = "log.c"
@@ -53,11 +65,11 @@ Exclude = False
 Compile Into Object File = False
 Project Flags = 0
 Folder = "Source Files"
-Folder Id = 0
+Folder Id = 1
 
-[File 0003]
+[File 0004]
 File Type = "CSource"
-Res Id = 3
+Res Id = 4
 Path Is Rel = True
 Path Rel To = "Project"
 Path Rel Path = "temp.c"
@@ -66,11 +78,11 @@ Exclude = True
 Compile Into Object File = False
 Project Flags = 0
 Folder = "Source Files"
-Folder Id = 0
+Folder Id = 1
 
-[File 0004]
+[File 0005]
 File Type = "CSource"
-Res Id = 4
+Res Id = 5
 Path Is Rel = True
 Path Rel To = "Project"
 Path Rel Path = "ZZJ.c"
@@ -79,18 +91,6 @@ Exclude = False
 Compile Into Object File = False
 Project Flags = 0
 Folder = "Source Files"
-Folder Id = 0
-
-[File 0005]
-File Type = "User Interface Resource"
-Res Id = 5
-Path Is Rel = True
-Path Rel To = "Project"
-Path Rel Path = "Portable.uir"
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
-Exclude = False
-Project Flags = 0
-Folder = "User Interface Files"
 Folder Id = 1
 
 [File 0006]
