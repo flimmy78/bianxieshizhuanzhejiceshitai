@@ -11,3 +11,5 @@ DAQmxReportErr
 
 
 #endif
+ ReadMeasure
+ ReadMeasureAndToWaveform
