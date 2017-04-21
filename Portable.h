@@ -20,23 +20,27 @@
 #define  GRAPH_TEXTMSG_3                  5       /* control type: textMsg, callback function: (none) */
 #define  GRAPH_TEXTMSG_4                  6       /* control type: textMsg, callback function: (none) */
 #define  GRAPH_TEXTMSG_5                  7       /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_6                  8       /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_7                  9       /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_9                  10      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_FORCE                      11      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TIME_CURRENT               12      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_8                  13      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_10                 14      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_CURRENT                    15      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TIME_FORCE                 16      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_DECORATION_2               17      /* control type: deco, callback function: (none) */
-#define  GRAPH_DECORATION                 18      /* control type: deco, callback function: (none) */
-#define  GRAPH_GRAPH                      19      /* control type: graph, callback function: OnGraph */
-#define  GRAPH_TEXTMSG_14                 20      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_13                 21      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG                    22      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_12                 23      /* control type: textMsg, callback function: (none) */
-#define  GRAPH_TEXTMSG_11                 24      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_15                 8       /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_6                  9       /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_7                  10      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_9                  11      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TIME_DELTA                 12      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_FORCE                      13      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_16                 14      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TIME_CURRENT               15      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_8                  16      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_10                 17      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_CURRENT                    18      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TIME_FORCE                 19      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_DECORATION_3               20      /* control type: deco, callback function: (none) */
+#define  GRAPH_DECORATION_2               21      /* control type: deco, callback function: (none) */
+#define  GRAPH_DECORATION                 22      /* control type: deco, callback function: (none) */
+#define  GRAPH_GRAPH                      23      /* control type: graph, callback function: OnGraph */
+#define  GRAPH_TEXTMSG_14                 24      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_13                 25      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG                    26      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_12                 27      /* control type: textMsg, callback function: (none) */
+#define  GRAPH_TEXTMSG_11                 28      /* control type: textMsg, callback function: (none) */
 
 #define  MAIN                             2
 #define  MAIN_STEPMSG_3                   2       /* control type: textMsg, callback function: (none) */
@@ -59,16 +63,16 @@
 #define  MAIN_DECORATION                  19      /* control type: deco, callback function: (none) */
 #define  MAIN_PIC_SAVEAS                  20      /* control type: picture, callback function: (none) */
 #define  MAIN_PIC_OPEN                    21      /* control type: picture, callback function: OnOpenData */
-#define  MAIN_TEXTMSG                     22      /* control type: textMsg, callback function: (none) */
-#define  MAIN_TEXTMSG_2                   23      /* control type: textMsg, callback function: (none) */
-#define  MAIN_TEXTMSG_4                   24      /* control type: textMsg, callback function: (none) */
+#define  MAIN_UNIT_V                      22      /* control type: textMsg, callback function: (none) */
+#define  MAIN_UNIT_I                      23      /* control type: textMsg, callback function: (none) */
+#define  MAIN_UNIT_VREF                   24      /* control type: textMsg, callback function: (none) */
 #define  MAIN_TIMER_MEASURE               25      /* control type: timer, callback function: OnTimer_Measure */
 #define  MAIN_PIC_SAVE                    26      /* control type: picture, callback function: OnSaveData */
 #define  MAIN_PIC_PRINT                   27      /* control type: picture, callback function: OnPrint */
 #define  MAIN_TIMER_WATCH                 28      /* control type: timer, callback function: OnTimer_Watch */
 #define  MAIN_DECORATION_3                29      /* control type: deco, callback function: (none) */
 #define  MAIN_PICTURE_6                   30      /* control type: picture, callback function: OnExitPrograme */
-#define  MAIN_TEXTMSG_3                   31      /* control type: textMsg, callback function: (none) */
+#define  MAIN_UNIT_FORCE                  31      /* control type: textMsg, callback function: (none) */
 #define  MAIN_PIC_MEASURE                 32      /* control type: picture, callback function: OnStartMeasure */
 
 #define  MAIN_DESK                        3

@@ -76,7 +76,7 @@ StartReadWfmLoopStopInfo g_info;
 
 #define SAMPLE_RATE 2500	 		// 采样频率 (Hz)
 #define SAMPLE_BUF_READ_TIME 0.1	// 采样缓冲区读取间隔时间 (s)
-#define SAMPLE_MAX_TIME 20      	// 最大采样时间。(s)
+#define SAMPLE_MAX_TIME 25      	// 最大采样时间。(s)
 #define SAMPLE_CHANNEL 4         	// 通道数
 typedef enum
 {
@@ -493,6 +493,19 @@ int UpdatePlot()
 }
 #endif
 
+void MeterHide(BOOL isHide)
+{
+	int panel = panelMain;
+	
+	int meterID[] = {MAIN_NUM_V, MAIN_UNIT_V,MAIN_NUM_I ,MAIN_UNIT_I,MAIN_NUM_FORCE, MAIN_UNIT_FORCE,
+					 MAIN_NUM_VREF, MAIN_UNIT_VREF};
+
+	for(int i=0;i<sizeof(meterID)/sizeof(int);++i)
+	{
+		SetCtrlAttribute (panel, meterID[i], ATTR_VISIBLE, !isHide);
+	}
+}
+
 int SetUIChange(int isStart)
 {
 	if(isStart)   // 开始采集
@@ -515,6 +528,7 @@ int SetUIChange(int isStart)
 
 
 		//SetCtrlAttribute(panel,control,ATTR_PICT_BGCOLOR,0x185776);
+		MeterHide(FALSE);
 		WaveformInit();
 		UpdateUserData(panelMeasure,TRUE);
 
@@ -533,6 +547,7 @@ int SetUIChange(int isStart)
 		//SetCtrlAttribute(panelMain,MAIN_PIC_PRINT,  ATTR_VISIBLE,TRUE);
 		//SetCtrlAttribute(panelMain,MAIN_LED_PRINT,  ATTR_VISIBLE,TRUE);
 
+		MeterHide(TRUE);
 		UpdatePlot(); // 重绘制，依照采集到的最大值重设纵坐标轴。
 		// 更新转辙机参数面板
 		UpdateUserData(panelMeasure,FALSE);
@@ -594,7 +609,8 @@ int GetFSMState(FSM_ID *fsmId,FSM_ID *fsm)
 
 void OnFSMStateQuitInFun()
 {
-	Measure(FALSE); // 停止采集
+	Measure(FALSE); 
+	Acquisition(FALSE);	// 停止采集
 	QuitUserInterface (0);
 }
 
@@ -746,6 +762,7 @@ Error:
 #if defined(PORTABLE)
 int main (int argc, char *argv[])
 {
+#if 1
 	int DAQmxError = 0;
 	TaskHandle task;
 	/* initialize and load resources */
@@ -760,8 +777,9 @@ Error:
 	if(DAQmxError!=0){
 		MessagePopup("错误","未连接硬件，程序将退出。");
 	}
+	UninitUserThread(g_ThreadControls,sizeof(g_ThreadControls)/sizeof(ThreadControl));	   // 退出线程,注意线程调用的函数，如DAQmxStopTask。	如果有这类函数，则本函数必须放在它结束之前。
 	DAQmxClearTask(task);		
-	DeInitUserThread(g_ThreadControls,sizeof(g_ThreadControls)/sizeof(ThreadControl));	   // 退出线程
+#endif
 	return 0;
 }
 #else
@@ -1011,6 +1029,18 @@ int CVICALLBACK OnSystem (int panel, int control, int event,
 	return 0;
 }
 
+int MeanWin(double sampleData[],ssize_t len,double *val)
+{
+	double rms = 0;
+	double data[len];
+	
+	memcpy(data,sampleData,len * sizeof(double));
+	HanWin(data,len);
+	Mean(data,len,&rms);// 有效值
+	*val = ?;
+	return 0;
+}
+
 int RMSWin(double sampleData[],ssize_t len,double *val)
 {
 	double rms = 0;
@@ -1084,24 +1114,45 @@ double MaxDoubleArray(double *array,int len)
 	return max;
 }
 
+int isAutoStop(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int len)
+{
+	int ret = 0;
+	double *waveform;
+
+	//WaveformGet(CHANNEL_I,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// 电流
+	waveform = &sampleData[CHANNEL_V][0];
+	if(len!=0)  // 有波形
+	{
+			waveform = &sampleData[CHANNEL_V][0];
+			if(MaxDoubleArray(waveform,len) < 5.0 )  // 采集到的电压
+			{
+				ret = 1;
+			}
+	}
+
+	return ret;	
+}
+
 int isAutoStart(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int len)
 {
 	int ret = 0;
 	double *waveform;
 
 	//WaveformGet(CHANNEL_I,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// 电流
-	waveform = &sampleData[CHANNEL_I][0];
+	waveform = &sampleData[CHANNEL_V][0];
 	if(len!=0)  // 有波形
 	{
-		if(MaxDoubleArray(waveform,len) > 1.0 ) // 采集卡电压，不是传感器的输入电压。
+#if 0		
+		if(MaxDoubleArray(waveform,len) > 1.0 ) // 采集卡电流，不是传感器的输入电压。
 		{
 			ret = 1;
 		}
 		else
+#endif
 		{
 			//WaveformGet(CHANNEL_V,CHANNEL_TYPE_LAST_DATA,&waveform,&len,&x,&increment);	// 电压
 			waveform = &sampleData[CHANNEL_V][0];
-			if(MaxDoubleArray(waveform,len) > 1.0 )  // 采集卡电压，，不是传感器的输入电压。
+			if(MaxDoubleArray(waveform,len) > 100.0 )  // 采集卡电压，，不是传感器的输入电压。
 			{
 				ret = 1;
 			}
@@ -1279,7 +1330,7 @@ int ReadMeasure(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int *length)
 	uInt32 dataSize;
 	double phase = SIMULATE_PHASE;
 
-
+	Sleep(100);  // 模拟硬件采集卡两次采集的时间间隔0.1s
 	dataSize = numChannels * g_info.numSampsPerChan;
 	DAQmxNullChk(data = (float64 *)malloc (dataSize * sizeof(float64)));
 
@@ -1289,7 +1340,7 @@ int ReadMeasure(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int *length)
 	SineWave(len,3.0*sqrt(2),SIMULATE_FREQUENCY	,&phase,data+len*channel);
 	channel ++;
 	// 电压
-	SineWave(len,1.0*sqrt(2),SIMULATE_FREQUENCY	,&phase,data+len*channel);
+	SineWave(len,160.0*sqrt(2),SIMULATE_FREQUENCY	,&phase,data+len*channel);
 	channel ++;	
 	// 电压基准 2.5V
 	Set1D(data+len*channel,len,2.5);
@@ -1505,7 +1556,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 	{
 		plotHandle = PlotWaveform (panel, graphCtrl, waveform, len, VAL_DOUBLE, 1.0f, 0.0f,
 								   x, increment, VAL_THIN_LINE, VAL_SOLID_SQUARE, VAL_SOLID, 1, VAL_WHITE);
-		SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
+		//SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
 	}
 #endif
 	
@@ -1515,7 +1566,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 	{
 		plotHandle = PlotWaveform (panel, graphCtrl, waveform, len, VAL_DOUBLE, 1.0f, 0.0f,
 								   x, increment, VAL_THIN_LINE, VAL_SOLID_SQUARE, VAL_SOLID, 1, VAL_BLUE);
-		SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
+		//SetPlotAttribute (panel, graphCtrl, plotHandle, ATTR_PLOT_YAXIS, VAL_RIGHT_YAXIS);
 	}
 #endif
 	TimeMeasure(8,TM_START);
@@ -1730,7 +1781,7 @@ int MeasureDisplayAndAutoStart()
 	GetFSMState(&g_fsmID,&fsm);	
 	switch(fsm.state){
 		case FSM_STATE_MEASURE:	// 测量中		
-			double maxTime_s = 15.1;	   // 只测量15秒内的数据
+			double maxTime_s = 20.1;	   // 只测量20秒内的数据
 			int n;
 			ElapseTimeToRunN(maxTime_s,&n);
 			if(n>0){ 
@@ -1852,8 +1903,9 @@ int CVICALLBACK OnTimer_Watch (int panel, int control, int event,
 	}
 	return 0;
 }
-#if 0
 
+#define DisplayCursorData_Ver 3
+#if DisplayCursorData_Ver == 1
 int DisplayCursorData(int panel,int control)
 {
 	int error;
@@ -1880,7 +1932,7 @@ int DisplayCursorData(int panel,int control)
 Error:
 	return error;
 }
-#else
+#elif DisplayCursorData_Ver == 2
 int DisplayCursorData(int panel,int control)
 {
 	int error;
@@ -1892,18 +1944,53 @@ int DisplayCursorData(int panel,int control)
 	errChk(GetGraphCursor(panel,control,activeCursor,&cursorX,&cursorY));
 	if(activeCursor==1)
 	{
-		sprintf(str,"%.1f",cursorY);
+		sprintf(str,"%.2f",cursorY);
 		SetCtrlVal(panel,GRAPH_FORCE,str);
-		sprintf(str,"%.1f",cursorX);
+		sprintf(str,"%.2f",cursorX);
 		SetCtrlVal(panel,GRAPH_TIME_FORCE ,str);
 	}
 	else
 	{
-		sprintf(str,"%.1f",cursorY);
+		sprintf(str,"%.2f",cursorY);
 		SetCtrlVal(panel,GRAPH_CURRENT,str);
-		sprintf(str,"%.1f",cursorX);
+		sprintf(str,"%.2f",cursorX);
 		SetCtrlVal(panel,GRAPH_TIME_CURRENT ,str);
 	}
+	
+	//sprintf(str,"%.2f",cursorX);	
+	//SetCtrlVal(panel,TIME_DELTA,str);
+Error:
+	return error;
+}
+#elif DisplayCursorData_Ver == 3 
+int DisplayCursorData(int panel,int control)
+{
+	int error;
+	int activeCursor;
+	
+	double cursorX[2],cursorY[2];
+	char str[20];
+
+	errChk(GetActiveGraphCursor (panel,control,&activeCursor));
+	errChk(GetGraphCursor(panel,control,1,&cursorX[0],&cursorY[0]));
+	errChk(GetGraphCursor(panel,control,2,&cursorX[1],&cursorY[1]));
+	if(activeCursor==1)
+	{
+		sprintf(str,"%.2f",cursorY[0]);
+		SetCtrlVal(panel,GRAPH_FORCE,str);
+		sprintf(str,"%.2f",cursorX[0]);
+		SetCtrlVal(panel,GRAPH_TIME_FORCE ,str);
+	}
+	else
+	{
+		sprintf(str,"%.2f",cursorY[1]);
+		SetCtrlVal(panel,GRAPH_CURRENT,str);
+		sprintf(str,"%.2f",cursorX[1]);
+		SetCtrlVal(panel,GRAPH_TIME_CURRENT ,str);
+	}
+	
+	sprintf(str,"%.2f",cursorX[1]-cursorX[0]);	
+	SetCtrlVal(panel,GRAPH_TIME_DELTA,str);
 Error:
 	return error;
 }
@@ -1913,7 +2000,7 @@ int CVICALLBACK OnGraph (int panel, int control, int event,
 {
 	switch (event)
 	{
-		case EVENT_COMMIT:
+		//case EVENT_COMMIT:
 		case EVENT_VAL_CHANGED:
 			DisplayCursorData(panel,control);
 			break;
@@ -2229,6 +2316,10 @@ void Acquire()
 		case FSM_STATE_MEASURE:	// 测量中	
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);			
+			if(isAutoStop(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+			{
+				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE);
+			}			
 			break;			
 		case FSM_STATE_AUTO_MEASURE:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线	
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);

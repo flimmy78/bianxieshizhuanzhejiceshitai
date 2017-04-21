@@ -1,5 +1,6 @@
 #include <ansi_c.h>
 #include <windows.h>
+#include <analysis.h>
 #include "TimeMeasure.h"
 
 
@@ -9,15 +10,38 @@ static __int64 m_time[MAX_TM_ID][MAX_TM_COUNT];
 static int m_index[MAX_TM_ID];
 static int m_overflow[MAX_TM_ID];
 
-int maxInt(int array[],ssize_t len)
+int MaxInt(int array[],ssize_t len)
 {
 	int max = array[0];
 	for(int i=1; i<len; i++)
 	{
-		if(max<array[1])
-			max = array[1];
+		if(max<array[i])
+			max = array[i];
 	}
 	return max;
+}
+
+double MaxDouble(double array[],ssize_t len)
+{
+	double max = array[0];
+	for(int i=1; i<len; i++)
+	{
+		if(max < array[i])
+			max = array[i];
+	}
+	return max;
+}
+
+
+double MinDouble(double array[],ssize_t len)
+{
+	double min = array[0];
+	for(int i=1; i<len; i++)
+	{
+		if(min > array[i])
+			min = array[i];
+	}
+	return min;
 }
 
 void TimeMeasure(int tmID,TIME_MEASURE tm)
@@ -51,6 +75,48 @@ void TimeMeasure(int tmID,TIME_MEASURE tm)
 	}
 }
 
+void MaxMin2FileHandle(FILE *fp)
+{
+	double maxTime[MAX_TM_ID]={0},minTime[MAX_TM_ID]={0},medianTime[MAX_TM_ID]={0};// 中间位置的值(不是平均值)
+	double times[MAX_TM_COUNT];
+	__int64 freq;
+	QueryPerformanceFrequency((LARGE_INTEGER*)&freq);
+	fprintf(fp,"\n--------------------------------------------------------\n");	
+	int row = MaxInt(m_index,MAX_TM_ID);
+	for(int tmID = 0; tmID<MAX_TM_ID && m_index[tmID]!=0; tmID++) // 每一列
+	{	
+		for(int i = 0; i < row; i++)// 每一行
+		{
+			//fprintf(fp,"	%.3f,",(double)m_time[tmID][i]/(double)freq*1000);
+			times[i] = (double)m_time[tmID][i]/(double)freq*1000;
+		}
+		maxTime[tmID] = MaxDouble(times,row);
+		Median(times,row,&medianTime[tmID]);
+		minTime[tmID] = MinDouble(times,row);
+	} 
+	// 输出
+	fprintf(fp,"最小值    ");	
+	for(int tmID = 0; tmID<MAX_TM_ID && m_index[tmID]!=0; tmID++)
+	{
+		fprintf(fp,"	%.3f,",minTime[tmID]);
+	}
+	/////////////////
+	fprintf(fp,"\n");
+	fprintf(fp,"中位值    ");	
+	for(int tmID = 0; tmID<MAX_TM_ID && m_index[tmID]!=0; tmID++)
+	{
+		fprintf(fp,"	%.3f,",medianTime[tmID]);
+	}
+	fprintf(fp,"\n");	
+	/////////////////	
+	fprintf(fp,"最大值    ");	
+	for(int tmID = 0; tmID<MAX_TM_ID && m_index[tmID]!=0; tmID++)
+	{
+		fprintf(fp,"	%.3f,",maxTime[tmID]);
+	}
+	fprintf(fp,"\n"); 
+}
+
 void SaveTimeMeasure(char *fileName)
 {
 	__int64 freq;
@@ -65,7 +131,7 @@ void SaveTimeMeasure(char *fileName)
 	}
 	fprintf(fp,"\n");
 
-	int row = maxInt(m_index,MAX_TM_ID);
+	int row = MaxInt(m_index,MAX_TM_ID);
 	for(int i = 0; i < row; i++)
 	{
 		fprintf(fp,"%3d:    ",i);
@@ -76,6 +142,7 @@ void SaveTimeMeasure(char *fileName)
 		fprintf(fp,"\n");
 	}
 	//if(maxInt(m_overflow,MAX_TM_ID)!=0)
+	MaxMin2FileHandle(fp);
 	{
 		fprintf(fp,"\n----------------------------溢出------------------------\n\n\n");
 		for(int tmID = 0; tmID<MAX_TM_ID && m_overflow[tmID]!=0; tmID++)
