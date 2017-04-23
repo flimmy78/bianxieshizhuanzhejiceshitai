@@ -1,9 +1,9 @@
 [Workspace Header]
-Version = 1302
-Pathname = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Desktop.cws"
-CVI Dir = "/c/program files (x86)/national instruments/cvi2013"
+Version = 1501
+Pathname = "//zpa/working/便携式转辙机拉力测试仪/working/Desktop.cws"
+CVI Dir = "/c/program files (x86)/national instruments/cvi2015"
 CVI Shared Dir = "/C/Program Files (x86)/National Instruments/Shared/CVI"
-CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2013"
+CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2015"
 CVI Pub Global Dir = "/C/ProgramData/National Instruments/CVI"
 IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
 IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
@@ -12,11 +12,11 @@ VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
 Number of Projects = 1
 Active Project = 1
 Project 0001 = "Desktop.prj"
-Drag Bar Left = 443
+Drag Bar Left = 316
 Window Top = 68
-Window Left = 393
+Window Left = 8
 Window Bottom = 570
-Window Right = 1183
+Window Right = 798
 Maximized = True
 Maximized Children = True
 Max32 Number Of Errors = 20
@@ -32,12 +32,12 @@ Break At First Statement = False
 Sort Type = "File Name"
 Number of Opened Files = 0
 Window Confinement Region Enabled = True
-MainColumnWidth = 426
+MainColumnWidth = 299
 FileDateColumnWidth = 70
 FileSizeColumnWidth = 70
 
 [Project Header 0001]
-Version = 1302
+Version = 1501
 Don't Update DistKit = False
 Platform Code = 4
 Build Configuration = "Debug"
@@ -46,51 +46,66 @@ Batch Build Release = False
 Batch Build Debug = False
 
 [File 0001]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/desktop.c"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 File Type = "CSource"
-Disk Date = 3573636927
+Disk Date = 3575703871
 In Projects = "1,"
-Source Window State = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
+Window Top = 45
+Window Left = 10
+Source Window State = "1,172,172,172,47,51,47,0,0,129,0,0,0,0,0,36,162,0,171,15,371,1024,1,0,"
+Line Tags = "2427,"
 
 [File 0002]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/log.c"
-File Type = "CSource"
-Disk Date = 3573636927
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
+File Type = "User Interface Resource"
+Disk Date = 3575704547
 In Projects = "1,"
-Source Window State = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
+Window Top = 137
+Window Left = 59
+Window Height = 347
+Window Width = 1024
 
 [File 0003]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/temp.c"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/desktop.c"
 File Type = "CSource"
-Disk Date = 3573688987
+Disk Date = 3573636927
 In Projects = "1,"
 Source Window State = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
 
 [File 0004]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
 File Type = "CSource"
-Disk Date = 3573689269
+Disk Date = 3574121915
+In Projects = "1,"
+Window Top = 92
+Window Left = 34
+Source Window State = "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,347,1024,0,0,"
+
+[File 0005]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/temp.c"
+File Type = "CSource"
+Disk Date = 3575279912
 In Projects = "1,"
 Source Window State = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
 
-[File 0005]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
-File Type = "User Interface Resource"
-Disk Date = 3573716710
-In Projects = "1,"
-
 [File 0006]
-Path Line0001 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/SQXZ-BX20C型转辙机拉"
-Path Line0002 = "力测试仪使用说明书.doc"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/TimeMeasure.c"
+File Type = "CSource"
+Disk Date = 3575420976
+In Projects = "1,"
+Source Window State = "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,"
+
+[File 0007]
+Path Line0001 = "//zpa/working/便携式转辙机拉力测试仪/working/SQXZ-BX20C型转辙机拉力测试仪使用说"
+Path Line0002 = "明书.doc"
 File Type = "Unknown"
 Disk Date = 3573724461
 In Projects = "1,"
 
-[File 0007]
-Path Line0001 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Waveform/演示波形.vi"
-Path Line0002 = "f"
+[File 0008]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/Waveform/演示波形.vif"
 File Type = "Unknown"
-Disk Date = 3573691783
+Disk Date = 3575619069
 In Projects = "1,"
 
 [Default Build Config 0001 Debug]

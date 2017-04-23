@@ -30,7 +30,7 @@
 	typedef double             float64;
 #endif
 
-//#define SIMULATE_INPUT  //  软件模拟输入数据，注释掉本行则使用采集卡
+#define SIMULATE_INPUT  //  软件模拟输入数据，注释掉本行则使用采集卡
 
 //==============================================================================
 // Constants
@@ -151,12 +151,12 @@ TEST_TIME  // 测试日期
 */
 typedef struct
 {
-	char switchModel[50]; // 转辙机型号
-	char forceSensorType[50]; // 力传感器类型
-	char switchNum[50]; // 转辙机编号
-	char TestAddr[50]; // 测试地点
-	char TestPerson[50]; // 测试人
-	time_t TestTime; // 测试日期
+	char switchModel[50]; 		// 转辙机型号
+	char forceSensorType[50]; 	// 力传感器类型
+	char switchNum[50]; 		// 转辙机编号
+	char TestAddr[50]; 			// 测试地点
+	char TestPerson[50]; 		// 测试人
+	time_t TestTime; 			// 测试日期
 } UserData;
 UserData g_UserData;
 
@@ -170,11 +170,14 @@ static int panelMeasure = 0;// 配置界面:开始测量参数
 static int panelSystem = 0; // 系统界面
 static int panelGraph  = 0; // 波形图界面
 static int panelPrint = 0;  // 打印界面
-static int panelUserData = 0; // 保存输入数据界面
+static int panelUserData = 0; 		// 用户输入数据界面
+static int panelUserDataCmd = 0;	// 用户输入数据命令界面
 
 static double initialX;     // 波形图电流、电压初始x的位置。
 static int initialVRef;     // 波形图"电压基准"初始位置
 static int initialForce;    // 波形图力的初始位置
+
+
 
 //==============================================================================
 // Static functions
@@ -207,9 +210,21 @@ int UpdateUserData(int panel,BOOL isSave);	// panel：需要更新的面板。TRUE:界面到
 int TBDisplayTime( void );                  // 界面显示当前时间
 int LoadALLData();
 
-int WaveformClr(CHANNEL channel);
+BOOL IsDCSwitchMachine()
+{
+	if(!strcmp(g_UserData.switchModel,"S700K-C"))
+	{
+		return FALSE;
+	}
+	else
+	{
+		return TRUE; 
+	}
+}			
 
-int CreatWaveformName(char *fileName)
+int WaveformClr(CHANNEL channel);
+#if 0
+int CreatWaveformName(char *fileName,)
 {
 	char strTime[50];
 	time_t testTime = g_UserData.TestTime;
@@ -217,6 +232,16 @@ int CreatWaveformName(char *fileName)
 	sprintf(fileName,"%s-%s-%s.vif",g_UserData.switchModel,g_UserData.switchNum,strTime);
 	return 0;
 }
+#else
+int CreatWaveformName(char *fileName,char *switchNum)
+{
+	char strTime[50];
+	time_t testTime = g_UserData.TestTime;
+	strftime(strTime,sizeof(strTime),"%Y年%m月%d日 %H时%M分%S秒",localtime(&testTime));
+	sprintf(fileName,"%s-%s-%s.vif",g_UserData.switchModel,switchNum,strTime);
+	return 0;
+}
+#endif
 
 
 void WaveformInit(void)
@@ -558,8 +583,9 @@ int SetUIChange(int isStart)
 // 状态机
 typedef enum{
 	FSM_STATE_IDEL,
-	FSM_STATE_MEASURE,
-	FSM_STATE_AUTO_MEASURE,
+	FSM_STATE_AUTO_MEASURE_1,	
+	FSM_STATE_AUTO_MEASURE_2,			// 自动测量
+	FSM_STATE_MANUAL_MEASURE,	// 手动测量
 	FSM_STATE_QUIT
 }FSM_STATE;
 
@@ -614,6 +640,7 @@ void OnFSMStateQuitInFun()
 	QuitUserInterface (0);
 }
 
+
 void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
 {
 	//FSM_ID fsm;
@@ -626,15 +653,16 @@ void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
 				SetUIChange(1);
 				Acquisition(TRUE);
 				SetCtrlAttribute(panelMain,MAIN_TIMER_MEASURE,ATTR_ENABLED,TRUE);
-				SetState(FSM_STATE_AUTO_MEASURE);				
+				SetState(FSM_STATE_AUTO_MEASURE_1);				
 			}else if(sig->id == FSM_SIG_START_MEASURE){ // 手动测量
 				SetUIChange(1);
 				Acquisition(TRUE);
 				Measure(TRUE);
-				SetState(FSM_STATE_MEASURE);				
+				SetState(FSM_STATE_MANUAL_MEASURE);				
 			}else if(sig->id == FSM_SIG_SAVE){  		// 保存
 				UpdateUserData(panelUserData,FALSE);
-				DisplayPanel(panelUserData);				// 显示保存面板
+				DisplayPanel(panelUserData);			// 显示用户数据面板
+				DisplayPanel(panelUserDataCmd);			// 显示用户数据命令面板
 			}else if(sig->id == FSM_SIG_LOAD){  		// 查询
 				LoadALLData();
 			}else if(sig->id == FSM_SIG_PRINT){  		// 
@@ -643,25 +671,26 @@ void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
 				SetState(FSM_STATE_QUIT);
 			}			
 			break;
-		case FSM_STATE_MEASURE:	// 测量中		
+		case FSM_STATE_MANUAL_MEASURE:
+		case FSM_STATE_AUTO_MEASURE_2:	// 测量中		
 			if(sig->id == FSM_SIG_UI_MEASURE){			// 用户停止测量
 				Measure(FALSE);				
 				Acquisition(FALSE);
 				SetUIChange(0);	
-				SaveTimeMeasure("OnTime.txt");
+				//SaveTimeMeasure("OnTime.txt");
 				SetState(FSM_STATE_IDEL);
 			}else if(sig->id == FSM_SIG_STOP_MEASURE){	// 测试时间到，停止
 				Measure(FALSE);
 				Acquisition(FALSE);
 				SetUIChange(0);					
-				SaveTimeMeasure("OnTime.txt");
+				//SaveTimeMeasure("OnTime.txt");
 				SetState(FSM_STATE_IDEL);
 			}else if(sig->id == FSM_SIG_QUIT){			// 退出程序
 				OnFSMStateQuitInFun();
 				SetState(FSM_STATE_QUIT);				
 			}
 			break;			
-		case FSM_STATE_AUTO_MEASURE:  // 自动测量
+		case FSM_STATE_AUTO_MEASURE_1:  // 自动测量
 			if(sig->id == FSM_SIG_UI_MEASURE){
 				SetUIChange(0);
 				Acquisition(FALSE);
@@ -669,7 +698,7 @@ void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
 			}else if(sig->id == FSM_SIG_START_MEASURE){
 				Acquisition(TRUE);
 				Measure(TRUE);
-				SetState(FSM_STATE_MEASURE);				
+				SetState(FSM_STATE_AUTO_MEASURE_2);				
 			}else if(sig->id == FSM_SIG_QUIT){
 				OnFSMStateQuitInFun();				
 				SetState(FSM_STATE_QUIT);				
@@ -709,6 +738,30 @@ Error:
 	return error;
 }
 
+int DesktopGuiInit()
+{
+	int error = 0;	
+	int attr;
+	
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_TOP,&attr);
+	SetPanelAttribute(panelGraph,ATTR_TOP,attr);
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_LEFT,&attr);
+	SetPanelAttribute(panelGraph,ATTR_WIDTH,attr);
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_HEIGHT,&attr);
+	SetPanelAttribute(panelGraph,ATTR_HEIGHT,attr);
+
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_TOP,&attr);
+	SetPanelAttribute(panelUserData,ATTR_TOP,attr);
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_LEFT,&attr);
+	SetPanelAttribute(panelUserData,ATTR_WIDTH,attr);	
+	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_HEIGHT,&attr);
+	SetPanelAttribute(panelUserData,ATTR_HEIGHT,attr);	
+	
+Error:
+	/* clean up */
+	return error;
+}
+
 void RunGUI(TaskHandle task)
 {
 	int error = 0;
@@ -724,21 +777,14 @@ void RunGUI(TaskHandle task)
 	errChk (panelMeasure = LoadPanel (panelMain	, "Portable.uir", MEASURE));
 	errChk (panelSystem  = LoadPanel (panelMain	, "Portable.uir", SYSTEM));
 	errChk (panelGraph   = LoadPanel (panelMain , "Portable.uir", GRAPH));
-#if defined(PORTABLE)	
-#else
-	int attr;
-	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_TOP,&attr);
-	SetPanelAttribute(panelGraph,ATTR_TOP,attr);
-	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_LEFT,&attr);
-	SetPanelAttribute(panelGraph,ATTR_WIDTH,attr);
-	GetCtrlAttribute(panelMain,MAIN_DESK_DECORATION,ATTR_HEIGHT,&attr);
-	SetPanelAttribute(panelGraph,ATTR_HEIGHT,attr);
-	
-#endif	
-	
+
 	errChk (panelPrint   = LoadPanel (panelMain , "Portable.uir", P_PRINT));
 	errChk (panelUserData = LoadPanel(panelMain , "Portable.uir", USER_DATA));
+	errChk (panelUserDataCmd = LoadPanel(panelMain,"Portable.uir",USER_CMD));
 
+#if !defined(PORTABLE)	
+	errChk (DesktopGuiInit());
+#endif
 	errChk (ChartInit(task));
 
 	/* display the panel and run the user interface */
@@ -824,7 +870,7 @@ int CVICALLBACK OnExitPrograme (int panel, int control, int event,
 int CVICALLBACK OnStartMeasure (int panel, int control, int event,
 								void *callbackData, int eventData1, int eventData2)
 {
-	if (event == EVENT_LEFT_CLICK)
+	if (event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		SendFSMSig(&g_fsmID,FSM_SIG_UI_MEASURE);
 	}
@@ -833,8 +879,6 @@ int CVICALLBACK OnStartMeasure (int panel, int control, int event,
 
 
 #if defined(PORTABLE)
-
-
 int Acquisition(BOOL isStart)
 {
 	int errNumber = 0;
@@ -888,6 +932,10 @@ void Measure(int isStart)
 {
 	return;
 }
+int Acquisition(BOOL isStart) 
+{
+	return 0;
+}
 #endif
 
 
@@ -907,7 +955,7 @@ int UpdateUserData(int panel,BOOL isSave)
 #if 0
 			GetCtrlVal(panel,USER_DATA_FORCE_SENSOR_TYPE,str);
 #else
-			if(strcmp(g_UserData.switchModel,"S700K-C"))
+			if(!strcmp(g_UserData.switchModel,"S700K-C"))
 			{
 				strcpy(str,"φ25mm");
 			}
@@ -955,7 +1003,7 @@ int UpdateUserData(int panel,BOOL isSave)
 		{
 			// 文件名
 			//strcpy(str,g_FileName);
-			CreatWaveformName(str);
+			CreatWaveformName(str,g_UserData.switchNum);
 			SetCtrlVal(panel,USER_DATA_FILENAME,str);
 			// 转辙机型号
 			strcpy(str,g_UserData.switchModel);
@@ -990,7 +1038,7 @@ int UpdateUserData(int panel,BOOL isSave)
 int CVICALLBACK OnMeasureStart (int panel, int control, int event,
 								void *callbackData, int eventData1, int eventData2)
 {
-	if (event == EVENT_LEFT_CLICK)
+	if (event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		// 转辙机用户数据
 		if(control == MEASURE_PIC_AUTO_MEASURE)  // 自动测量
@@ -1012,7 +1060,7 @@ int CVICALLBACK OnMeasureStart (int panel, int control, int event,
 int CVICALLBACK OnSystemSet (int panel, int control, int event,
 							 void *callbackData, int eventData1, int eventData2)
 {
-	if (event == EVENT_LEFT_CLICK)
+	if (event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		HidePanel(panel);
 	}
@@ -1022,7 +1070,7 @@ int CVICALLBACK OnSystemSet (int panel, int control, int event,
 int CVICALLBACK OnSystem (int panel, int control, int event,
 						  void *callbackData, int eventData1, int eventData2)
 {
-	if(event == EVENT_LEFT_CLICK)
+	if(event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		DisplayPanel(panelSystem);
 	}
@@ -1031,13 +1079,18 @@ int CVICALLBACK OnSystem (int panel, int control, int event,
 
 int MeanWin(double sampleData[],ssize_t len,double *val)
 {
-	double rms = 0;
+	double mean = 0;
 	double data[len];
 	
 	memcpy(data,sampleData,len * sizeof(double));
+#if 1	
 	HanWin(data,len);
-	Mean(data,len,&rms);// 有效值
-	*val = ?;
+	Mean(data,len,&mean);
+	*val = 2*mean;
+#else
+	Mean(data,len,&mean);
+	*val = mean;	
+#endif	
 	return 0;
 }
 
@@ -1074,13 +1127,22 @@ int MeterDisplay()
 	ssize_t dataLen = g_info.numSampsPerChan;
 	// 电流	
 	sampleData = g_Waveform.sampleData[CHANNEL_I];
-	RMSWin(sampleData,dataLen,&val);
+	if(IsDCSwitchMachine()){
+		MeanWin(sampleData,dataLen,&val);  // 平均值电流
+	}else{
+		RMSWin(sampleData,dataLen,&val);   // 有效值电流		
+	}
 	//SetCtrlVal(panelMain,MAIN_NUM_I,val);
 	SetCtrlAttribute(panelMain,MAIN_NUM_I,ATTR_CTRL_VAL,val);
 	
 	// 电压
 	sampleData = g_Waveform.sampleData[CHANNEL_V];
-	RMSWin(sampleData,dataLen,&val);// 电压
+	if(IsDCSwitchMachine()){
+		MeanWin(sampleData,dataLen,&val);		// 平均值电压
+	}else{
+		RMSWin(sampleData,dataLen,&val);		// 有效值电压		
+	}	
+	
 	//SetCtrlVal(panelMain,MAIN_NUM_V,val);
 	SetCtrlAttribute(panelMain,MAIN_NUM_V,ATTR_CTRL_VAL,val);
 
@@ -1193,15 +1255,16 @@ int RawData2Waveform(double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIM
 		int i=0;
 		for(; index<len-4*sampNumPerCycle; index+=sampNumPerCycle,++i)
 		{
-			RMSWin(data[CHANNEL_I]+index,g_info.numSampsPerChan,&waveform[CHANNEL_I][i]);
-			RMSWin(data[CHANNEL_V]+index,g_info.numSampsPerChan,&waveform[CHANNEL_V][i]);
-#if 0			
-			//Median(data[CHANNEL_FORCE]+    2*i*25,25,&waveform[CHANNEL_FORCE][2*i]  );	// 转换力.前25点。每秒100次，每次2500Hz/100Hz = 25点平均值
-			//Median(data[CHANNEL_FORCE]+(2*i+1)*25,25,&waveform[CHANNEL_FORCE][2*i+1]);	// 转换力.后25点。
-#else
+			if(IsDCSwitchMachine()){ // 直流转辙机
+				MeanWin(data[CHANNEL_I]+index,g_info.numSampsPerChan,&waveform[CHANNEL_I][i]);
+				MeanWin(data[CHANNEL_V]+index,g_info.numSampsPerChan,&waveform[CHANNEL_V][i]);							
+			}else{					 // 交流转辙机
+				RMSWin(data[CHANNEL_I]+index,g_info.numSampsPerChan,&waveform[CHANNEL_I][i]);
+				RMSWin(data[CHANNEL_V]+index,g_info.numSampsPerChan,&waveform[CHANNEL_V][i]);				
+			}
 			Median(data[CHANNEL_FORCE]+index	,25,&waveform[CHANNEL_FORCE][2*i]  );	// 转换力.前25点。每秒100次，每次2500Hz/100Hz = 25点平均值
 			Median(data[CHANNEL_FORCE]+index+25	,25,&waveform[CHANNEL_FORCE][2*i+1]);	// 转换力.后25点。						
-#endif
+
 		}
 		initialX = g_ConvertedLen/50;
 		initialForce = g_ConvertedLen/25;
@@ -1724,7 +1787,7 @@ int MeasureDisplayAndAutoStart()
 	FSM_ID fsm;
 	GetFSMState(&g_fsmID,&fsm);	
 	switch(fsm.state){
-		case FSM_STATE_MEASURE:	// 测量中		
+		case FSM_STATE_AUTO_MEASURE_2:	// 测量中		
 			double maxTime_s = 15.1;	   // 只测量15秒内的数据
 			int n;
 			ElapseTimeToRunN(maxTime_s,&n);
@@ -1745,7 +1808,7 @@ int MeasureDisplayAndAutoStart()
 				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE); // 停止采集  
 			}			
 			break;			
-		case FSM_STATE_AUTO_MEASURE:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
+		case FSM_STATE_AUTO_MEASURE_1:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			MeterDisplay();  // 在仪表面板显示测量值
 			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
@@ -1780,7 +1843,8 @@ int MeasureDisplayAndAutoStart()
 	FSM_ID fsm;
 	GetFSMState(&g_fsmID,&fsm);	
 	switch(fsm.state){
-		case FSM_STATE_MEASURE:	// 测量中		
+		case FSM_STATE_MANUAL_MEASURE:
+		case FSM_STATE_AUTO_MEASURE_2:	// 测量中 		
 			double maxTime_s = 20.1;	   // 只测量20秒内的数据
 			int n;
 			ElapseTimeToRunN(maxTime_s,&n);
@@ -1803,7 +1867,7 @@ int MeasureDisplayAndAutoStart()
 				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE); // 停止采集  
 			}			
 			break;			
-		case FSM_STATE_AUTO_MEASURE:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
+		case FSM_STATE_AUTO_MEASURE_1:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
 #if 0			
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			MeterDisplay();  // 在仪表面板显示测量值
@@ -2107,7 +2171,7 @@ int PrintUserData(UserData *data,int panel)
 int CVICALLBACK OnPrint (int panel, int control, int event,
 						 void *callbackData, int eventData1, int eventData2)
 {
-	if (event == EVENT_LEFT_CLICK)
+	if (event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		PrintUserData(&g_UserData,panelPrint);
 		PlotData(CHANNEL_TYPE_ALL_DATA,panelPrint, P_PRINT_GRAPH);
@@ -2157,7 +2221,7 @@ Error:
 int CVICALLBACK OnSaveData (int panel, int control, int event,
 							void *callbackData, int eventData1, int eventData2)
 {
-	if(event == EVENT_LEFT_CLICK)
+	if(event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		SendFSMSig(&g_fsmID,FSM_SIG_SAVE);
 		//UpdateUserData(panelUserData,FALSE);
@@ -2195,7 +2259,7 @@ int LoadALLData()
 int CVICALLBACK OnOpenData (int panel, int control, int event,
 							void *callbackData, int eventData1, int eventData2)
 {
-	if(event == EVENT_LEFT_CLICK)
+	if(event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		//LoadALLData();
 		SendFSMSig(&g_fsmID,FSM_SIG_LOAD);
@@ -2262,10 +2326,12 @@ int SaveALLData()
 int CVICALLBACK OnSaveUserData (int panel, int control, int event,
 								void *callbackData, int eventData1, int eventData2)
 {
-	if(event == EVENT_LEFT_CLICK)
+	if(event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
-		HidePanel(panel);
-		UpdateUserData(panel,TRUE);
+		HidePanel(panel);					// 隐藏用户数据命令面板   //HidePanel(panelUserDataCmd)
+		HidePanel(panelUserData);			// 隐藏用户数据面板
+		
+		UpdateUserData(panelUserData,TRUE);
 		SaveALLData();
 	}
 	return 0;
@@ -2274,9 +2340,10 @@ int CVICALLBACK OnSaveUserData (int panel, int control, int event,
 int CVICALLBACK OnCancelSaveUserData (int panel, int control, int event,
 									  void *callbackData, int eventData1, int eventData2)
 {
-	if(event == EVENT_LEFT_CLICK)
+	if(event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		HidePanel(panel);
+		HidePanel(panelUserData);
 	}
 	return 0;
 }
@@ -2284,7 +2351,7 @@ int CVICALLBACK OnCancelSaveUserData (int panel, int control, int event,
 int CVICALLBACK OnMeasureCancel (int panel, int control, int event,
 								 void *callbackData, int eventData1, int eventData2)
 {
-	if (event == EVENT_LEFT_CLICK)
+	if (event == EVENT_LEFT_CLICK || event == EVENT_LEFT_DOUBLE_CLICK)
 	{
 		HidePanel(panel);
 	}
@@ -2298,8 +2365,11 @@ int CVICALLBACK ONSwitchNumChange (int panel, int control, int event,
 	{
 		case EVENT_COMMIT:
 			char fileName[MAX_PATHNAME_LEN];
-			UpdateUserData(panel,TRUE);
-			CreatWaveformName(fileName);
+			char switchNum[50];
+			GetCtrlVal(panel,USER_DATA_SWITCH_NUM,switchNum);
+			//strcpy(g_UserData.switchNum,str);
+			//UpdateUserData(panel,TRUE);
+			CreatWaveformName(fileName,switchNum);
 			SetCtrlVal(panel,USER_DATA_FILENAME,fileName);
 			break;
 	}
@@ -2308,12 +2378,17 @@ int CVICALLBACK ONSwitchNumChange (int panel, int control, int event,
 
 ///////////////////////////////////////////////
 // 线程回调函数.采集线程
+#if defined(PORTABLE)
 void Acquire()
 {
 	FSM_ID fsm;
 	GetFSMState(&g_fsmID,&fsm);	
 	switch(fsm.state){
-		case FSM_STATE_MEASURE:	// 测量中	
+		case FSM_STATE_MANUAL_MEASURE:
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);						
+			break;
+		case FSM_STATE_AUTO_MEASURE_2:	// 测量中	
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);			
 			if(isAutoStop(g_Waveform.sampleData,g_Waveform.sampleDataLen))
@@ -2321,7 +2396,7 @@ void Acquire()
 				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE);
 			}			
 			break;			
-		case FSM_STATE_AUTO_MEASURE:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线	
+		case FSM_STATE_AUTO_MEASURE_1:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线	
 			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
 			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
 			{
@@ -2348,4 +2423,31 @@ int CVICALLBACK ThreadAcquire(void *functionData)
 	DAQmxWaitUntilTaskDone(g_info.task,DAQmx_Val_WaitInfinitely);//等待超时设置为1秒
 	return 0;
 }
+#else
+int CVICALLBACK ThreadAcquire(void *functionData)
+{
+	return 0;
+}
+#endif
 
+int CVICALLBACK OnSwitchDataAndWave (int panel, int control, int event,
+									 void *callbackData, int eventData1, int eventData2)
+{   
+static int isDisplayInfo = 1;  // 显示信息
+	switch(event) 
+	{
+		case  EVENT_LEFT_CLICK:
+	 	case  EVENT_LEFT_DOUBLE_CLICK:	  
+			if(isDisplayInfo){	// 显示信息
+				SetCtrlAttribute(panel,MAIN_DESK_PIC_WAVE_DATA,ATTR_LABEL_TEXT,"显示波形");
+				UpdateUserData(panelUserData,FALSE);
+				DisplayPanel(panelUserData);				// 显示保存面板
+			}else{				// 显示波形
+				SetCtrlAttribute(panel,MAIN_DESK_PIC_WAVE_DATA,ATTR_LABEL_TEXT,"显示信息");
+				HidePanel(panelUserData);
+			}
+			isDisplayInfo = !isDisplayInfo;
+		break;
+	}
+	return 0;
+}

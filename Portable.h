@@ -76,20 +76,22 @@
 #define  MAIN_PIC_MEASURE                 32      /* control type: picture, callback function: OnStartMeasure */
 
 #define  MAIN_DESK                        3
-#define  MAIN_DESK_STEPMSG_3              2       /* control type: textMsg, callback function: (none) */
-#define  MAIN_DESK_STEPMSG_2              3       /* control type: textMsg, callback function: (none) */
+#define  MAIN_DESK_MSG_COMPANY_TEL        2       /* control type: textMsg, callback function: (none) */
+#define  MAIN_DESK_MSG_COMPANY_NAME       3       /* control type: textMsg, callback function: (none) */
 #define  MAIN_DESK_LED_RUNING_8           4       /* control type: LED, callback function: (none) */
-#define  MAIN_DESK_LED_PRINT              5       /* control type: LED, callback function: (none) */
-#define  MAIN_DESK_LED_OPEN               6       /* control type: LED, callback function: (none) */
-#define  MAIN_DESK_TM_TIME                7       /* control type: textMsg, callback function: (none) */
-#define  MAIN_DESK_DECORATION_2           8       /* control type: deco, callback function: (none) */
-#define  MAIN_DESK_TM_TITLE_2             9       /* control type: textMsg, callback function: (none) */
-#define  MAIN_DESK_DECORATION             10      /* control type: deco, callback function: (none) */
-#define  MAIN_DESK_PIC_OPEN               11      /* control type: picture, callback function: OnOpenData */
-#define  MAIN_DESK_PIC_PRINT              12      /* control type: picture, callback function: OnPrint */
-#define  MAIN_DESK_TIMER_WATCH            13      /* control type: timer, callback function: OnTimer_Watch */
-#define  MAIN_DESK_DECORATION_3           14      /* control type: deco, callback function: (none) */
-#define  MAIN_DESK_PICTURE_6              15      /* control type: picture, callback function: OnExitPrograme */
+#define  MAIN_DESK_LED_PRINT_2            5       /* control type: LED, callback function: (none) */
+#define  MAIN_DESK_LED_PRINT              6       /* control type: LED, callback function: (none) */
+#define  MAIN_DESK_LED_OPEN               7       /* control type: LED, callback function: (none) */
+#define  MAIN_DESK_TM_TIME                8       /* control type: textMsg, callback function: (none) */
+#define  MAIN_DESK_DECORATION_2           9       /* control type: deco, callback function: (none) */
+#define  MAIN_DESK_TM_TITLE_2             10      /* control type: textMsg, callback function: (none) */
+#define  MAIN_DESK_DECORATION             11      /* control type: deco, callback function: (none) */
+#define  MAIN_DESK_PIC_PRINT_2            12      /* control type: picture, callback function: OnPrint */
+#define  MAIN_DESK_PIC_OPEN               13      /* control type: picture, callback function: OnOpenData */
+#define  MAIN_DESK_PIC_WAVE_DATA          14      /* control type: picture, callback function: OnSwitchDataAndWave */
+#define  MAIN_DESK_TIMER_WATCH            15      /* control type: timer, callback function: OnTimer_Watch */
+#define  MAIN_DESK_DECORATION_3           16      /* control type: deco, callback function: (none) */
+#define  MAIN_DESK_PICTURE_6              17      /* control type: picture, callback function: OnExitPrograme */
 
 #define  MEASURE                          4
 #define  MEASURE_DECORATION               2       /* control type: deco, callback function: (none) */
@@ -134,18 +136,19 @@
 #define  SYSTEM_TEXTMSG_2                 13      /* control type: textMsg, callback function: (none) */
 #define  SYSTEM_TEXTMSG_3                 14      /* control type: textMsg, callback function: (none) */
 
-#define  USER_DATA                        8
-#define  USER_DATA_DECORATION             2       /* control type: deco, callback function: (none) */
-#define  USER_DATA_PIC_CANCEL             3       /* control type: picture, callback function: OnCancelSaveUserData */
-#define  USER_DATA_PIC_SAVE               4       /* control type: picture, callback function: OnSaveUserData */
-#define  USER_DATA_SWITCH_NUM             5       /* control type: string, callback function: ONSwitchNumChange */
-#define  USER_DATA_TEST_ADDR              6       /* control type: string, callback function: (none) */
-#define  USER_DATA_TEST_PERSON            7       /* control type: string, callback function: (none) */
-#define  USER_DATA_FILENAME               8       /* control type: string, callback function: (none) */
-#define  USER_DATA_TEST_TIME              9       /* control type: string, callback function: (none) */
-#define  USER_DATA_FORCE_SENSOR_TYPE      10      /* control type: string, callback function: (none) */
-#define  USER_DATA_RADIOBUTTON            11      /* control type: radioButton, callback function: (none) */
-#define  USER_DATA_SWITCH_MODEL           12      /* control type: ring, callback function: (none) */
+#define  USER_CMD                         8
+#define  USER_CMD_PIC_SAVE                2       /* control type: picture, callback function: OnSaveUserData */
+#define  USER_CMD_PIC_CANCEL              3       /* control type: picture, callback function: OnCancelSaveUserData */
+
+#define  USER_DATA                        9
+#define  USER_DATA_SWITCH_NUM             2       /* control type: string, callback function: ONSwitchNumChange */
+#define  USER_DATA_TEST_ADDR              3       /* control type: string, callback function: (none) */
+#define  USER_DATA_TEST_PERSON            4       /* control type: string, callback function: (none) */
+#define  USER_DATA_FILENAME               5       /* control type: string, callback function: (none) */
+#define  USER_DATA_TEST_TIME              6       /* control type: string, callback function: (none) */
+#define  USER_DATA_FORCE_SENSOR_TYPE      7       /* control type: string, callback function: (none) */
+#define  USER_DATA_RADIOBUTTON            8       /* control type: radioButton, callback function: (none) */
+#define  USER_DATA_SWITCH_MODEL           9       /* control type: ring, callback function: (none) */
 
 
      /* Control Arrays: */
@@ -171,6 +174,7 @@ int  CVICALLBACK OnPrint(int panel, int control, int event, void *callbackData, 
 int  CVICALLBACK OnSaveData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSaveUserData(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnStartMeasure(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
+int  CVICALLBACK OnSwitchDataAndWave(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK ONSwitchNumChange(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSystem(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
 int  CVICALLBACK OnSystemSet(int panel, int control, int event, void *callbackData, int eventData1, int eventData2);
