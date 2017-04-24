@@ -21,6 +21,8 @@
 #include "log.h"
 #include "TimeMeasure.h"
 #include "UserThread.h"
+#include "UserThreadQueue.h"
+#include "global.h"
 
 #if defined(PORTABLE) 
 	#include <NIDAQmx.h> 
@@ -74,10 +76,7 @@ StartReadWfmLoopStopInfo g_info;
 
 
 
-#define SAMPLE_RATE 2500	 		// 采样频率 (Hz)
-#define SAMPLE_BUF_READ_TIME 0.1	// 采样缓冲区读取间隔时间 (s)
-#define SAMPLE_MAX_TIME 25      	// 最大采样时间。(s)
-#define SAMPLE_CHANNEL 4         	// 通道数
+
 typedef enum
 {
 	CHANNEL_I,   		// 电流通道
@@ -92,41 +91,7 @@ typedef enum
 	CHANNEL_TYPE_LAST_DATA   // 通道内最后添加的数据
 } CHANNEL_TYPE;
 
-typedef struct
-{
-	double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE];// 单次从采集卡读取的原始数据。每通道容量为1秒(SAMPLE_RATE)
-	// 通道：0：电流，1：电压，2：基准，3：力
-	int    sampleDataLen;// 单次读取的原始数据的长度
-	
-	double rawData[SAMPLE_CHANNEL][SAMPLE_RATE * SAMPLE_MAX_TIME];; // 一次测量的采集卡数据。时间从测量开始到测量结束
-	int    rawDataLen;   // 一次测量的采集卡数据的长度。随着不断读取采集卡数据，该长度数据增大。
 
-	double 	force[100 * SAMPLE_MAX_TIME];	// 力数组，用于绘制波形图。每秒100次为力传感器变化的频率上限。
-	double 	forceIncrement;		 			// 间隔时间
-	int    	forceLen;  						// 数组长度
-	double* forceLastAddr;
-	int    	forceLastLen;
-
-	double 	I[50 * SAMPLE_MAX_TIME];// 电流数组，用于绘制波形图。50为工频频率50Hz，也是工频的有效值在理论上的最高频率。
-	double 	IIncrement;
-	int    	ILen;
-	double* ILastAddr;
-	int    	ILastLen;
-
-	double 	V[50 * SAMPLE_MAX_TIME];// 电压数组，用于绘制波形图。50为工频频率50Hz，也是工频的有效值在理论上的最高频率。
-	double 	VIncrement;
-	int    	VLen;
-	double*	VLastAddr;
-	int    	VLastLen;
-
-	double 	VRef[SAMPLE_RATE * SAMPLE_MAX_TIME];	// 电压基准。保留采集到的原始数据
-	double 	VRefIncrement;
-	int    	VRefLen;
-	double*	VRefLastAddr;
-	int    	VRefLastLen;
-} Waveform;
-Waveform g_Waveform;
-int g_ConvertedLen;
 
 char g_FileName[MAX_PATHNAME_LEN];// 波形文件名
 // 设置波形参数
@@ -195,7 +160,7 @@ static int initialForce;    // 波形图力的初始位置
 	}
 //==============================================================================
 // Global variables
-
+Waveform g_Waveform;
 //==============================================================================
 // Global functions
 int CVICALLBACK ThreadAcquire(void *functionData);
@@ -672,18 +637,20 @@ void OnFSMSig(FSM_ID *fsmId,FSM_SIG *sig)
 			}			
 			break;
 		case FSM_STATE_MANUAL_MEASURE:
-		case FSM_STATE_AUTO_MEASURE_2:	// 测量中		
+		case FSM_STATE_AUTO_MEASURE_2:	// 自动测量中		
 			if(sig->id == FSM_SIG_UI_MEASURE){			// 用户停止测量
 				Measure(FALSE);				
 				Acquisition(FALSE);
 				SetUIChange(0);	
 				//SaveTimeMeasure("OnTime.txt");
+				SaveTimeMeasure("OnTime.txt");
 				SetState(FSM_STATE_IDEL);
 			}else if(sig->id == FSM_SIG_STOP_MEASURE){	// 测试时间到，停止
 				Measure(FALSE);
 				Acquisition(FALSE);
 				SetUIChange(0);					
 				//SaveTimeMeasure("OnTime.txt");
+				SaveTimeMeasure("OnTime.txt");
 				SetState(FSM_STATE_IDEL);
 			}else if(sig->id == FSM_SIG_QUIT){			// 退出程序
 				OnFSMStateQuitInFun();
@@ -816,15 +783,15 @@ int main (int argc, char *argv[])
 		return -1;
 
 	DAQmxErrChk(DAQmxLoadTask("RailwaySwitch",&task));
-
+	InitThreadQueue();
 	RunGUI(task);
-
 Error:
 	if(DAQmxError!=0){
 		MessagePopup("错误","未连接硬件，程序将退出。");
 	}
 	UninitUserThread(g_ThreadControls,sizeof(g_ThreadControls)/sizeof(ThreadControl));	   // 退出线程,注意线程调用的函数，如DAQmxStopTask。	如果有这类函数，则本函数必须放在它结束之前。
 	DAQmxClearTask(task);		
+	UninitThreadQueue();
 #endif
 	return 0;
 }
@@ -888,6 +855,7 @@ int Acquisition(BOOL isStart)
 		if(isRunning != TRUE){
 			isRunning = TRUE;
 			//errNumber = DAQmxStartTask(g_info.task);		
+			FlushQueue_Sample();
 			UserThread(THREAD_CMD_CREATE_AND_RUN,&g_ThreadControls[0]);
 		}
 	}else{		 // 停止采集
@@ -1645,7 +1613,7 @@ void PlotData(CHANNEL_TYPE chanType,int panel,int graphCtrl)  // 电流:红色，电压
 }
 
 #if defined(PORTABLE)
-#define MDAASVer 3
+#define MDAASVer 4
 #if MDAASVer == 0
 int MeasureDisplayAndAutoStart()
 {
@@ -1886,6 +1854,89 @@ int MeasureDisplayAndAutoStart()
 	}	
 	return 0;
 }
+#elif MDAASVer == 4
+// 经过的时间折合采样/显示次数。
+int ElapseTimeToRunN(double maxTime_s,int *n)
+{
+	int maxTime_ms = maxTime_s*1000;	   // 秒转换为毫秒。只测量maxTime_s秒内的数据
+	int curTick = GetTickCount();
+	if(curTick > g_info.startTick + maxTime_ms)
+		curTick = g_info.startTick + maxTime_ms;
+	if(n != NULL)
+		*n = (curTick - g_info.startTick - g_info.processedTick)/100;
+	g_info.processedTick = ((curTick - g_info.startTick)/100)*100;		
+	return 0;
+}
+int time_start_ms;
+int time_stop_ms;
+int time_elapse_ms;
+int MeasureDisplayAndAutoStart()
+{
+	FSM_ID fsm;
+	GetFSMState(&g_fsmID,&fsm);	
+	double maxTime_s = 20.1;	// 只测量20秒内的数据
+	switch(fsm.state){
+		case FSM_STATE_MANUAL_MEASURE:
+			ElapseTimeToRunN(maxTime_s,NULL);
+			TimeMeasure(0,TM_START);
+			if(ReadQueueAllData_Sample()){
+				TimeMeasure(0,TM_STOP);TimeMeasure(1,TM_START);
+				MeterDisplay();TimeMeasure(1,TM_STOP);TimeMeasure(2,TM_START);
+				RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);TimeMeasure(2,TM_STOP);TimeMeasure(3,TM_START);
+				PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);TimeMeasure(3,TM_STOP);
+			}
+			if(g_info.processedTick >= maxTime_s*1000) // 只测量maxTime 秒内的数据
+			{
+				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE); // 停止采集  
+			}			
+			break;
+		case FSM_STATE_AUTO_MEASURE_2:	// 测量中 		
+			ElapseTimeToRunN(maxTime_s,NULL);
+			TimeMeasure(0,TM_START);
+			if(ReadQueueAllData_Sample()){
+				TimeMeasure(0,TM_STOP);TimeMeasure(1,TM_START);
+				MeterDisplay();TimeMeasure(1,TM_STOP);TimeMeasure(2,TM_START);
+				RawData2Waveform(g_Waveform.rawData,g_Waveform.rawDataLen);TimeMeasure(2,TM_STOP);TimeMeasure(3,TM_START);
+				PlotData(CHANNEL_TYPE_LAST_DATA,g_info.chartPanel, g_info.chartCtrl);TimeMeasure(3,TM_STOP);
+			}			
+			if(isAutoStop(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+			{
+				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE);
+			}			
+			if(g_info.processedTick >= maxTime_s*1000) // 只测量maxTime 秒内的数据
+			{
+				SendFSMSig(&g_fsmID,FSM_SIG_STOP_MEASURE); // 停止采集  
+			}			
+			break;			
+		case FSM_STATE_AUTO_MEASURE_1:  // 等待输入信号，自动测量。只显示当前值，不绘制曲线
+#if 1		
+			if(ReadQueue_Sample(g_Waveform.sampleData,&g_Waveform.sampleDataLen)){
+				//ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+				MeterDisplay();  // 在仪表面板显示测量值
+				if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+				{
+					//Measure(TRUE);
+					SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+					SendFSMSig(&g_fsmID,FSM_SIG_START_MEASURE);
+				}
+			}
+#else
+			ReadMeasure(g_Waveform.sampleData,&g_Waveform.sampleDataLen);
+			MeterDisplay();  // 在仪表面板显示测量值
+			if(isAutoStart(g_Waveform.sampleData,g_Waveform.sampleDataLen))
+			{
+				//Measure(TRUE);
+				SampleData2RawData(g_Waveform.sampleData,g_Waveform.sampleDataLen);
+				SendFSMSig(&g_fsmID,FSM_SIG_START_MEASURE);
+			}
+#endif
+			break;			
+		default :
+			break;
+	}	
+	return 0;
+}
+
 #endif
 #endif 
 
@@ -2379,6 +2430,8 @@ int CVICALLBACK ONSwitchNumChange (int panel, int control, int event,
 ///////////////////////////////////////////////
 // 线程回调函数.采集线程
 #if defined(PORTABLE)
+#define Acquire_Ver 2
+#if Acquire_Ver == 1
 void Acquire()
 {
 	FSM_ID fsm;
@@ -2406,6 +2459,30 @@ void Acquire()
 			break;
 	}
 }
+#elif Acquire_Ver == 2
+void Convert2JiaoChuo(double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE],int sampleDataLen,double dat[SAMPLE_RATE][SAMPLE_CHANNEL])
+{
+	for(int i=0;i<sampleDataLen;i++){
+		dat[i][0] = sampleData[0][i];
+		dat[i][1] = sampleData[1][i];
+		dat[i][2] = sampleData[2][i];
+		dat[i][3] = sampleData[3][i];
+		//WriteQueue(sampleData[i],1);
+	}	
+}
+void Acquire()
+{
+	static double sampleData[SAMPLE_CHANNEL][SAMPLE_RATE];// 单次从采集卡读取的原始数据。每通道容量为1秒(SAMPLE_RATE)
+	// 通道：0：电流，1：电压，2：基准，3：力
+	static int    sampleDataLen;// 单次读取的原始数据的长度	
+	//static double dat[SAMPLE_RATE][SAMPLE_CHANNEL];
+	
+	ReadMeasure(sampleData,&sampleDataLen);
+	WriteQueue_Sample(sampleData,sampleDataLen); 
+	//Convert2JiaoChuo(sampleData,sampleDataLen,dat);
+	//WriteQueue(dat,sampleDataLen); 
+}
+#endif
 int CVICALLBACK ThreadAcquire(void *functionData)
 {
 	ThreadControl *ctl = (ThreadControl*)functionData;

@@ -1,9 +1,9 @@
 [Workspace Header]
-Version = 1302
-Pathname = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.cws"
-CVI Dir = "/c/program files (x86)/national instruments/cvi2013"
+Version = 1501
+Pathname = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.cws"
+CVI Dir = "/c/program files (x86)/national instruments/cvi2015"
 CVI Shared Dir = "/C/Program Files (x86)/National Instruments/Shared/CVI"
-CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2013"
+CVI Pub Local Dir = "/C/ProgramData/National Instruments/CVI2015"
 CVI Pub Global Dir = "/C/ProgramData/National Instruments/CVI"
 IVI Standard Root Dir = "/C/Program Files (x86)/IVI Foundation/IVI"
 IVI Standard Root 64-bit Dir = "/C/Program Files/IVI Foundation/IVI"
@@ -12,7 +12,7 @@ VXIplug&play Framework 64-bit Dir = "/C/Program Files/IVI Foundation/VISA/win64"
 Number of Projects = 1
 Active Project = 1
 Project 0001 = "ZZJ.prj"
-Drag Bar Left = 204
+Drag Bar Left = 316
 Window Top = 68
 Window Left = 8
 Window Bottom = 570
@@ -30,14 +30,14 @@ Save Changes Before Compiling = "Always"
 Hide Windows = False
 Break At First Statement = False
 Sort Type = "File Name"
-Number of Opened Files = 1
+Number of Opened Files = 4
 Window Confinement Region Enabled = True
-MainColumnWidth = 187
+MainColumnWidth = 299
 FileDateColumnWidth = 70
 FileSizeColumnWidth = 70
 
 [Project Header 0001]
-Version = 1302
+Version = 1501
 Don't Update DistKit = False
 Platform Code = 4
 Build Configuration = "Debug"
@@ -46,33 +46,63 @@ Batch Build Release = False
 Batch Build Debug = False
 
 [File 0001]
-Path = "/c/Program Files (x86)/National Instruments/CVI2013/toolslib/toolbox/asynctmr.fp"
+Path = "/c/Program Files (x86)/National Instruments/CVI2015/toolslib/toolbox/asynctmr.fp"
 File Type = "Function Panel"
-Disk Date = 3486474000
+Disk Date = 3548854800
 In Projects = "1,"
 
 [File 0002]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 File Type = "CSource"
-Disk Date = 3575703871
+Disk Date = 3575798556
+In Projects = "1,"
+Window Top = 45
+Window Left = 10
+Window Z-Order = 2
+Source Window State = "1,1881,1881,1881,32,38,32,0,0,98,0,0,0,0,0,22,2470,0,2483,26,585,1238,1,0,"
+Line Tags = "1892,2446,"
+
+[File 0003]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/UserThreadQueue.c"
+File Type = "CSource"
+Disk Date = 3575798587
 In Projects = "1,"
 Window Top = 45
 Window Left = 10
 Window Z-Order = 1
-Source Window State = "1,1005,1005,1005,34,35,45,0,0,73,0,0,0,0,0,20,997,0,1010,46,585,1238,1,0,"
-Line Tags = "664,"
+Source Window State = "1,45,45,45,10,19,19,0,0,129,0,4,0,4,0,35,67,0,89,94,585,1238,1,0,"
 
-[File 0003]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/log.c"
+[File 0004]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/UserThreadQueue.h"
+File Type = "Include"
+Disk Date = 3575798473
+In Projects = ""
+Window Top = 64
+Window Left = 26
+Window Z-Order = 3
+Source Window State = "1,19,19,19,4,20,20,0,3,98,0,0,0,0,0,22,6,0,19,4,585,1238,1,0,"
+
+[File 0005]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/global.h"
+File Type = "Include"
+Disk Date = 3575784519
+In Projects = ""
+Window Top = 47
+Window Left = 13
+Window Z-Order = 4
+Source Window State = "1,52,52,52,0,27,27,0,0,80,0,0,0,0,0,22,3,0,8,32,563,1024,1,0,"
+
+[File 0006]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/log.c"
 File Type = "CSource"
 Disk Date = 3574121915
 In Projects = "1,"
 Window Top = 45
 Window Left = 10
-Source Window State = "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,189,0,196,29,371,1024,0,0,"
+Source Window State = "1,21,21,21,9,16,9,0,3,0,0,0,0,0,0,0,15,0,21,16,371,1024,1,0,"
 
-[File 0004]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/temp.c"
+[File 0007]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/temp.c"
 File Type = "CSource"
 Disk Date = 3575279912
 In Projects = "1,"
@@ -80,8 +110,8 @@ Window Top = 74
 Window Left = 29
 Source Window State = "1,13,13,13,1,12,12,0,3,0,0,0,0,0,0,0,0,0,13,1,371,1024,1,0,"
 
-[File 0005]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/TimeMeasure.c"
+[File 0008]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/TimeMeasure.c"
 File Type = "CSource"
 Disk Date = 3575420976
 In Projects = "1,"
@@ -89,17 +119,17 @@ Window Top = 95
 Window Left = 42
 Source Window State = "1,83,83,83,21,28,28,0,3,0,0,0,0,0,0,0,72,0,83,21,585,1238,1,0,"
 
-[File 0006]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/UserThread.c"
+[File 0009]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/UserThread.c"
 File Type = "CSource"
 Disk Date = 3575337320
 In Projects = "1,"
 Window Top = 38
 Window Left = 10
-Source Window State = "1,34,34,34,47,73,73,0,0,0,0,0,0,0,0,0,37,0,43,49,587,1024,1,0,"
+Source Window State = "1,34,34,34,47,73,73,0,0,0,0,0,0,0,0,0,9,0,39,13,587,1024,1,0,"
 
-[File 0007]
-Path = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/Portable.uir"
+[File 0010]
+Path = "//zpa/working/便携式转辙机拉力测试仪/working/Portable.uir"
 File Type = "User Interface Resource"
 Disk Date = 3575704547
 In Projects = "1,"
@@ -109,7 +139,10 @@ Window Height = 587
 Window Width = 1024
 
 [Tab Order]
-Tab 0001 = "/d/document/zhangpei/working/便携式转辙机拉力测试仪/working/ZZJ.c"
+Tab 0001 = "//zpa/working/便携式转辙机拉力测试仪/working/UserThreadQueue.h"
+Tab 0002 = "//zpa/working/便携式转辙机拉力测试仪/working/UserThreadQueue.c"
+Tab 0003 = "//zpa/working/便携式转辙机拉力测试仪/working/global.h"
+Tab 0004 = "//zpa/working/便携式转辙机拉力测试仪/working/ZZJ.c"
 
 [Default Build Config 0001 Debug]
 Generate Browse Info = True
@@ -201,4 +234,7 @@ Environment Options = ""
 
 [Watch 1]
 Watch Expression = "g_fsmID"
+
+[Watch 2]
+Watch Expression = "g_Waveform"
 
